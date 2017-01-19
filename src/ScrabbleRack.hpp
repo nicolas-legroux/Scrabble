@@ -1,3 +1,6 @@
+#ifndef SCRABBLE_RACK_HPP_
+#define SCRABBLE_RACK_HPP_
+
 #include <vector>
 #include <string>
 
@@ -69,3 +72,5 @@ class ScrabbleRack{
 
 		bool empty() const { return size == 0; }
 };
+
+#endif /* SCRABBLE_RACK_HPP_ */
