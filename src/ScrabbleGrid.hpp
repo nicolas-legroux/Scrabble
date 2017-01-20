@@ -44,6 +44,8 @@ const std::vector<unsigned int> LETTER_POINTS_FR = {
 
 class ScrabbleGrid{
 	private:
+
+		// Represent crosschecks as bit vectors using an int
 		class Crosscheck{
 			private:
 				unsigned int data = 0;
@@ -57,48 +59,66 @@ class ScrabbleGrid{
 					return data & (1 << (c - 'A'));
 				}
 		};
+
 		friend std::ostream& operator<<(std::ostream &os, const ScrabbleGrid &grid);
 		friend std::ostream& operator<<(std::ostream &os, const Crosscheck &crosscheck);
+		
+		// The grid
 		std::vector<char> grid = std::vector<char>(15*15);
+		
+		// The crosschecks
 		std::vector<Crosscheck> horizontalCrosschecks = std::vector<Crosscheck>(15*15);
 		std::vector<Crosscheck> verticalCrosschecks = std::vector<Crosscheck>(15*15);
+		
+		// Is the grid currently transposed ?
 		bool transposed = false;
+		
+		// Where have the blanks been played ?
 		std::set<std::pair<unsigned int, unsigned int>> blanks;
+		
+		// Trie containing the dictionary
 		Trie *trie;
+		
+		// Pointers that are swaped during a transposition
 		std::vector<Crosscheck> *hzCrosschecks;
 		std::vector<Crosscheck> *vcCrosschecks;
 		
-		/* Used in constructor */
+		// Initialize a new grid
 		void makeNewGrid();
 		
-		/* Setters and getters */		
-		
+		// Helper functions for the grid		
 		char & get(unsigned int row, unsigned int column) { return grid[15*row + column]; }
-		const char & get(unsigned int row, unsigned int column) const { return grid[15*row + column]; }
+		const char & get(unsigned int row, unsigned int column) const { 
+			return grid[15*row + column]; 
+		}
+		
+		// Helper functions for the crosschecks
 		Crosscheck & getHorizontalCrosscheck(unsigned int row, unsigned int column){
 			return (*hzCrosschecks)[15*row + column];
 		}
 		const Crosscheck & getHorizontalCrosscheck(unsigned int row, unsigned int column) const {
 			return (*hzCrosschecks)[15*row + column];
 		}
+		// Notice the transposition
 		Crosscheck & getVerticalCrosscheck(unsigned int row, unsigned int column){
 			return (*vcCrosschecks)[15*column + row];
 		}
 		const Crosscheck & getVerticalCrosscheck(unsigned int row, unsigned int column) const {
 			return (*vcCrosschecks)[15*column + row];
 		}
+
+		// Is the position an anchor ? (ie it has non trivial crosschecks)
 		bool isAnchor(unsigned int row, unsigned int column){
 			return getHorizontalCrosscheck(row, column).valid() || 
 				getVerticalCrosscheck(row, column).valid();
 		}
-		
-		unsigned int computeScore(const std::string &word, unsigned int firstRow, unsigned int firstColumn, 
-				bool doTranspose, const std::set<unsigned int> &blanks = {});
-		
+				
+		// Is the position currently available (ie no tiles have been played yet) ?
 		bool isAvailable(unsigned int row, unsigned int column) const {
 			return get(row, column) <= 4;
 		}
 
+		// Check whether a blank has been played in the position
 		bool isBlank(unsigned int row, unsigned int column){
 			if(transposed){
 				std::swap(row, column);
@@ -106,6 +126,7 @@ class ScrabbleGrid{
 			return blanks.find({row, column}) != blanks.end();
 		}
 
+		// Add a blank to the grid
 		void addBlank(unsigned int row, unsigned int column){
 			if(transposed){
 				std::swap(row, column);
@@ -113,8 +134,18 @@ class ScrabbleGrid{
 			blanks.insert({row, column});
 		}
 
-		std::pair<unsigned int, bool> computeAdjacentScore(unsigned int row, unsigned int column);
+		// Compute the scores of the letters directly above and under the given position
+		std::pair<unsigned int, bool> computeAdjacentScore(unsigned int row, 
+				unsigned int column);
+		
+		// Compute the score of a word played horizontally. If the word is 
+		// to be played vertically, set the 'doTranspose' flag. If the word uses blank tiles, 
+		// the index of thoses tiles in the word should be specified
+		unsigned int computeScore(const std::string &word, unsigned int firstRow, 
+				unsigned int firstColumn, bool doTranspose, 
+				const std::set<unsigned int> &blanks = {});
 
+		// Compute horizontal and vertical crosschecks
 		std::pair<std::string, std::string> verticalCrosscheckHelper(unsigned int row, unsigned int column);
 		void computeVerticalCrosscheck(unsigned int row, unsigned int column);
 		std::pair<std::string, std::string> horizontalCrosscheckHelper(unsigned int row, unsigned int column);
@@ -123,12 +154,17 @@ class ScrabbleGrid{
 	public:
 		ScrabbleGrid(Trie *_trie) : trie(_trie) { makeNewGrid(); }
 
-		unsigned int placeWord(const std::string &word, unsigned int firstRow, unsigned int forstColumn, 
-				bool doTranspose, const std::set<unsigned int> &blanks = {});
+		// Place a new word in the grid. By default, the word is placed horizontally.
+		// Set the 'doTranspose' flag to place it vertically
+		unsigned int placeWord(const std::string &word, unsigned int firstRow, 
+				unsigned int firstColumn, bool doTranspose, 
+				const std::set<unsigned int> &blanks = {});
 		
+		// Tranpose the grid
 		void transpose();
 };
 
 std::ostream& operator<<(std::ostream &os, const ScrabbleGrid &grid);
+std::ostream& operator<<(std::ostream &os, const ScrabbleGrid::Crosscheck &cc);
 
 #endif /* SCRABBLE_GRID_HPP_ */	

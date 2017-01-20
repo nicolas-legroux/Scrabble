@@ -1,5 +1,6 @@
 #include "ScrabbleRack.hpp"
 #include <algorithm>
+#include <cassert>
 
 ScrabbleStack::ScrabbleStack(const std::vector<int> &letter_distribution){
 	for(unsigned int i=0; i<letter_distribution.size(); ++i){
@@ -43,19 +44,25 @@ void ScrabbleRack::clear() {
 	size = 0;
 }
 
-std::string ScrabbleRack::convertToString() const {
-	std::string s;
-	for(unsigned int i=0; i<rack.size()-1; ++i){
-		for(unsigned int j=0; j<rack[i]; ++j){
-			s.push_back('A' + i);
-			s.push_back(' ');
+void ScrabbleRack::remove(const std::vector<char> &letters){
+	for(char c : letters){
+		assert(rack[c - 'A'] > 0);
+		--rack[c - 'A'];
+		--size;
+	}
+}
+
+std::ostream& operator<<(std::ostream &os, const ScrabbleRack &rack){
+	for(unsigned int i=0; i<rack.rack.size()-1; ++i){
+		for(unsigned int j=0; j<rack.rack[i]; ++j){
+			char c = 'A' + i;
+			os << c;
 		}
 	}
 
-	for(unsigned int j=0; j<rack.back(); ++j){
-		s.push_back('*');
-		s.push_back(' ');
+	for(unsigned int j=0; j<rack.rack.back(); ++j){
+		os << '*';
 	}
 
-	return s;
+	return os;
 }

@@ -3,10 +3,11 @@
 
 #include <vector>
 #include <string>
+#include <iostream>
 
 const char BLANK = 'Z'+1;
 
-const std::vector<int> letter_distribution_fr = { 
+const std::vector<int> LETTER_DISTRIBUTION_FR = { 
 	9, // A 
 	2, // B
 	2, // C
@@ -43,17 +44,22 @@ class ScrabbleStack{
 		unsigned int end;
 		unsigned int lettersRemaining() { return end - start; }
 	public:
-		ScrabbleStack(const std::vector<int> &letter_distribution = letter_distribution_fr);
+		// Build stack with initial letter distribution
+		ScrabbleStack(const std::vector<int> &letter_distribution = LETTER_DISTRIBUTION_FR);
 
+		// Shuffle the remaining elements in the stack
 		void shuffle();
 
+		// Check whether the stack is empty
 		bool empty() const { return start == end; }
 
+		// Draw n letters (max, can be lower) from the stack
 		std::vector<char> drawLetters(unsigned int n);
 };
 
 class ScrabbleRack{
 	private:
+		friend std::ostream& operator<<(std::ostream &os, const ScrabbleRack &rack);
 		std::vector<unsigned int> rack = std::vector<unsigned int>(27, 0);
 		unsigned int size = 0;
 		ScrabbleStack *stack;
@@ -62,15 +68,22 @@ class ScrabbleRack{
 			drawFromStack();
 		}
 		
+		// Check whether the stack from which the rack is drawn is empty
 		bool stackIsEmpty() { return stack->empty(); }
 		
+		// Draw letters from the stack to complete the rack
 		void drawFromStack();
 
+		// Empty the rack
 		void clear(); 
 
-		std::string convertToString() const;
+		// Remove letters from the rack
+		void remove(const std::vector<char> &letters);
 
+		// Check whether the rack is empty
 		bool empty() const { return size == 0; }
 };
+
+std::ostream& operator<<(std::ostream &os, const ScrabbleRack &rack);
 
 #endif /* SCRABBLE_RACK_HPP_ */
