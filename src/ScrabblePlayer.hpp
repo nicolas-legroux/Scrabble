@@ -2,6 +2,8 @@
 #define SCRABBLE_PLAYER_HPP_
 
 #include <iostream>
+#include <stack>
+
 #include "ScrabbleRack.hpp"
 #include "ScrabbleGrid.hpp"
 
@@ -26,8 +28,14 @@ class ScrabblePlayer{
 			public:
 				WordChoice() : row(-1), column(-1), vertical(false) {} 
 				WordChoice(const std::string &s, unsigned int r, unsigned c, bool v, 
-						const std::set<unsigned int> &_blanks = {}) : 
-					word(s), row(r), column(c), vertical(v), blanks(_blanks) { }
+						const std::stack<unsigned int> &_blanks) : 
+					word(s), row(r), column(c), vertical(v) {
+						std::stack<unsigned int> cp(_blanks);
+						while(!cp.empty()){
+							blanks.insert(cp.top());
+							cp.pop();
+						}
+					}
 				std::pair<unsigned int, unsigned int> computeStatistics(ScrabbleGrid *grid);
 				unsigned int play(ScrabbleGrid *grid, ScrabbleRack *rack);
 				WordChoice& transpose();
@@ -44,13 +52,13 @@ class BestWordIA : public ScrabblePlayer{
 	private:
 		std::pair<unsigned int, std::vector<unsigned int>> findAnchors(unsigned int row);
 		void leftPart(int limit, unsigned int anchorRow, unsigned int anchorColumn, bool vertical, 
-				std::vector<WordChoice> *choices);
+				std::stack<unsigned int> *blanks, std::vector<WordChoice> *choices);
 		void recursiveLeftPart(std::string s, unsigned int node, int limit, 
 				unsigned int anchorRow, unsigned int anchorColumn, bool vertical,
-				std::vector<WordChoice> *choices);
+				std::stack<unsigned int> *blanks, std::vector<WordChoice> *choices);
 		void extendRight(std::string s, unsigned int node, bool isTerminal, unsigned int anchorRow, 
 				unsigned int anchorColumn, unsigned int currentIdx, unsigned int prefixSize, 
-				bool vertical, std::vector<WordChoice> *choices);
+				bool vertical, std::stack<unsigned int> *blanks, std::vector<WordChoice> *choices);
 		void generateHorizontalWordChoices(bool vertical, std::vector<WordChoice> *choices);
 
 	public:
