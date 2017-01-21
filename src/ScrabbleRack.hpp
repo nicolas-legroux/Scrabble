@@ -82,9 +82,6 @@ class ScrabbleRack{
 		// Remove letters from the rack
 		void remove(const std::vector<char> &letters);
 
-		// Manually remove letters
-		virtual void remove() {}
-
 		// Check whether the rack contains a certain letter
 		bool hasLetter(char c) const {
  			return rack[c-'A'] > 0;
@@ -124,7 +121,6 @@ class ScrabbleManualRack : public ScrabbleRack{
 		}
 		bool stackIsEmpty() const override { return emptyStack; }
 		void draw() override;
-		void remove() override;
 };
 
 std::ostream& operator<<(std::ostream &os, const ScrabbleRack &rack);

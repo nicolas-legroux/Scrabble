@@ -75,21 +75,6 @@ void ScrabbleManualRack::draw() {
 	}
 }
 
-void ScrabbleManualRack::remove() {
-	std::cout << "Type the letters to remove from the rack : ";
-	std::string s;
-	std::cin >> s;
-	std::transform(s.begin(), s.end(), s.begin(), ::toupper);
-	for(char c : s){
-		if(c == '*'){
-			removeBlank();
-		}
-		else{
-			removeLetter(c);
-		}
-	}
-}
-
 std::ostream& operator<<(std::ostream &os, const ScrabbleRack &rack){
 	os << '{';
 	for(unsigned int i=0; i<rack.rack.size()-1; ++i){
@@ -105,5 +90,4 @@ std::ostream& operator<<(std::ostream &os, const ScrabbleRack &rack){
 	os << '}';
 	return os;
 }
-
 
