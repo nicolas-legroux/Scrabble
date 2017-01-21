@@ -16,6 +16,6 @@ Launch the program in its root directory :
 	cd Scrabble
 	./Scrabble
 
-At launch, you get to choose whether the rack should be drawn automatically (using the letter distribution of the French Scrabble game) or if it should be manually entered at each iteratiion on the standard input.
+At launch, you get to choose whether the rack should be drawn automatically (using the letter distribution of the French Scrabble game) or if it should be manually entered at each iteration on the standard input.
 
 The blank tile is represented by the '*' character.
