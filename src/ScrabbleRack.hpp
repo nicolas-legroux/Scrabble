@@ -34,7 +34,7 @@ const std::vector<int> LETTER_DISTRIBUTION_FR = {
 	1, // X
 	1, // Y
 	1, // Z
-	0  // BLANK
+	2  // BLANK
 };
 
 class ScrabbleStack{

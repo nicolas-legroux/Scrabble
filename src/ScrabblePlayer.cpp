@@ -76,7 +76,7 @@ std::pair<unsigned int, std::vector<unsigned int>> BestWordIA::findAnchors(unsig
 	}
 }
 
-void BestWordIA::extendRight(std::string s, unsigned int node, bool isTerminal, 
+void BestWordIA::extendRight(std::string *s, unsigned int node, bool isTerminal, 
 		unsigned int anchorRow, unsigned int anchorColumn, unsigned int currentIdx, unsigned int prefixSize,
 		bool vertical, std::stack<unsigned int> *blanks, std::vector<WordChoice> *choices){
 
@@ -89,7 +89,7 @@ void BestWordIA::extendRight(std::string s, unsigned int node, bool isTerminal,
 			if(vertical){
 				std::swap(row, column);
 			}
-			choices->emplace_back(s, row, column, vertical, *blanks);
+			choices->emplace_back(*s, row, column, vertical, *blanks);
 		}
 		return;
 	}
@@ -106,11 +106,11 @@ void BestWordIA::extendRight(std::string s, unsigned int node, bool isTerminal,
 			if(vertical){
 				std::swap(row, column);
 			}
-			choices->emplace_back(s, row, column, vertical, *blanks);
+			choices->emplace_back(*s, row, column, vertical, *blanks);
 		}
 		
 		// A prefix has been found and it will be impossible to go any further
-		if(node == 0 && !s.empty()){
+		if(node == 0 && !s->empty()){
 			return;
 		}
 
@@ -118,15 +118,29 @@ void BestWordIA::extendRight(std::string s, unsigned int node, bool isTerminal,
 		for(const auto &edge : edges){
 			char c = edge.getLetter();
 			auto &crosscheck = grid->getHorizontalCrosscheck(anchorRow, anchorColumn + currentIdx);
-			if(rack->hasLetter(c) && (!crosscheck.valid() || crosscheck.check(c))){
-				rack->removeLetter(c);
-				unsigned int next = edge.getNextNode();
-				bool nextTerminal = edge.isTerminal();
-				s.push_back(c);
-				extendRight(s, next, nextTerminal, anchorRow, anchorColumn, currentIdx+1, prefixSize, 
+			if(!crosscheck.valid() || crosscheck.check(c)){
+				if(rack->hasLetter(c)){
+					rack->removeLetter(c);
+					unsigned int next = edge.getNextNode();
+					bool nextTerminal = edge.isTerminal();
+					s->push_back(c);
+					extendRight(s, next, nextTerminal, anchorRow, anchorColumn, currentIdx+1, prefixSize, 
 						vertical, blanks, choices);
-				s.pop_back();
-				rack->addLetter(c);
+					s->pop_back();
+					rack->addLetter(c);
+				}
+				if(rack->hasBlank()){
+					rack->removeBlank();
+					blanks->push(s->size());
+					s->push_back(c);
+					unsigned int next = edge.getNextNode();
+					bool nextTerminal = edge.isTerminal();
+					extendRight(s, next, nextTerminal, anchorRow, anchorColumn, currentIdx+1, prefixSize, 
+						vertical, blanks, choices);
+					s->pop_back();
+					blanks->pop();
+					rack->addBlank();
+				}
 			}
 		}
 	}
@@ -138,7 +152,7 @@ void BestWordIA::extendRight(std::string s, unsigned int node, bool isTerminal,
 		
 		// A correct prefix has been found, but it will be impossible to extend further
 		if(node==0){
-			assert(!s.empty());
+			assert(!s->empty());
 			return;
 		}
 
@@ -146,29 +160,31 @@ void BestWordIA::extendRight(std::string s, unsigned int node, bool isTerminal,
 		std::vector<Trie::Edge> edges = grid->getTrie()->getOutwardEdges(node);
 		for(const auto &edge : edges){
 			if(edge.getLetter() == c){
-				s.push_back(c);
+				s->push_back(c);
 				unsigned int next = edge.getNextNode();
 				bool nextTerminal = edge.isTerminal();
-				return extendRight(s, next, nextTerminal, anchorRow, anchorColumn, currentIdx+1, 
+				extendRight(s, next, nextTerminal, anchorRow, anchorColumn, currentIdx+1, 
 						prefixSize, vertical, blanks, choices);
+				s->pop_back();
+				return;
 			}
 		}
 	}
 }
 
-void BestWordIA::recursiveLeftPart(std::string s, unsigned int node, int limit, 
+void BestWordIA::recursiveLeftPart(std::string *s, unsigned int node, int limit, 
 		unsigned int anchorRow, unsigned int anchorColumn, bool vertical, 
 		std::stack<unsigned int> *blanks, std::vector<WordChoice> *choices){
 	
 	// A word has been found but it won't be anchored
 	
-	if(node == 0 && !s.empty()){
+	if(node == 0 && !s->empty()){
 		return; 
 	}
 
 	// Extend to the right starting from the anchor square
 	
-	extendRight(s, node, false, anchorRow, anchorColumn, 0, s.size(), vertical, blanks, choices);
+	extendRight(s, node, false, anchorRow, anchorColumn, 0, s->size(), vertical, blanks, choices);
 	
 	// Compute all possible prefixes formed with letters from the rack
 	
@@ -178,11 +194,21 @@ void BestWordIA::recursiveLeftPart(std::string s, unsigned int node, int limit,
 			char c = edge.getLetter();
 			if(rack->hasLetter(c)){
 				rack->removeLetter(c);
-				s.push_back(c);
+				s->push_back(c);
 				unsigned int nextNode = edge.getNextNode();
 				recursiveLeftPart(s, nextNode, limit-1, anchorRow, anchorColumn, vertical, blanks, choices);
-				s.pop_back();
+				s->pop_back();
 				rack->addLetter(c);
+			}
+			if(rack->hasBlank()){
+				rack->removeBlank();
+				blanks->push(s->size());
+				s->push_back(c);
+				unsigned int nextNode = edge.getNextNode();
+				recursiveLeftPart(s, nextNode, limit-1, anchorRow, anchorColumn, vertical, blanks, choices);
+				s->pop_back();
+				blanks->pop();
+				rack->addBlank();
 			}
 		}
 	}
@@ -203,7 +229,7 @@ void BestWordIA::leftPart(int limit, unsigned int anchorRow, unsigned int anchor
 		}
 		std::reverse(s.begin(), s.end());
 		unsigned int node = grid->trie->getPrefixNode(s);
-		extendRight(s, node, false, anchorRow, anchorColumn, 0, s.size(), vertical, blanks, choices);		
+		extendRight(&s, node, false, anchorRow, anchorColumn, 0, s.size(), vertical, blanks, choices);		
 	}
 
 	// The square left of the anchor square is not occupied. Extend right after 
@@ -211,7 +237,7 @@ void BestWordIA::leftPart(int limit, unsigned int anchorRow, unsigned int anchor
 	
 	else{
 		std::string s;
-		recursiveLeftPart(s, 0, limit, anchorRow, anchorColumn, vertical, blanks, choices);
+		recursiveLeftPart(&s, 0, limit, anchorRow, anchorColumn, vertical, blanks, choices);
 	}
 }
 

@@ -98,6 +98,13 @@ std::ostream& operator<<(std::ostream &os, const ScrabbleGrid &g){
 		}
 	}	
 
+	if(!g.blanks.empty()){
+		std::cout << "Blanks : ";
+		for(auto blank : g.blanks){
+			std::cout << '(' << blank.first << ", " << blank.second << ") ";
+		}
+		std::cout << '\n';
+	}
 	/*
 	std::cout << "Horizontal crosschecks :\n";
 

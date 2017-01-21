@@ -53,10 +53,10 @@ class BestWordIA : public ScrabblePlayer{
 		std::pair<unsigned int, std::vector<unsigned int>> findAnchors(unsigned int row);
 		void leftPart(int limit, unsigned int anchorRow, unsigned int anchorColumn, bool vertical, 
 				std::stack<unsigned int> *blanks, std::vector<WordChoice> *choices);
-		void recursiveLeftPart(std::string s, unsigned int node, int limit, 
+		void recursiveLeftPart(std::string *s, unsigned int node, int limit, 
 				unsigned int anchorRow, unsigned int anchorColumn, bool vertical,
 				std::stack<unsigned int> *blanks, std::vector<WordChoice> *choices);
-		void extendRight(std::string s, unsigned int node, bool isTerminal, unsigned int anchorRow, 
+		void extendRight(std::string *s, unsigned int node, bool isTerminal, unsigned int anchorRow, 
 				unsigned int anchorColumn, unsigned int currentIdx, unsigned int prefixSize, 
 				bool vertical, std::stack<unsigned int> *blanks, std::vector<WordChoice> *choices);
 		void generateHorizontalWordChoices(bool vertical, std::vector<WordChoice> *choices);
