@@ -106,7 +106,7 @@ class ScrabbleGrid{
 			return (*hzCrosschecks)[15*row + column];
 		}
 		// Notice the transposition
-		Crosscheck & getVerticalCrosscheck(unsigned int row, unsigned int column){
+		Crosscheck & getVerticalCrosscheck(unsigned int row, unsigned int column){ 
 			return (*vcCrosschecks)[15*column + row];
 		}
 		const Crosscheck & getVerticalCrosscheck(unsigned int row, unsigned int column) const {
@@ -145,10 +145,8 @@ class ScrabbleGrid{
 				unsigned int column);
 		
 		// Compute horizontal and vertical crosschecks
-		std::pair<std::string, std::string> verticalCrosscheckHelper(unsigned int row, unsigned int column);
-		void computeVerticalCrosscheck(unsigned int row, unsigned int column);
-		std::pair<std::string, std::string> horizontalCrosscheckHelper(unsigned int row, unsigned int column);
-		void computeHorizontalCrosscheck(unsigned int row, unsigned int column);
+		std::pair<std::string, std::string> findPrefixSuffix(unsigned int row, unsigned int column);
+		void computeCrosscheck(unsigned int row, unsigned int column);
 		void computeCrosscheck(Crosscheck &crosscheck, const std::pair<std::string, std::string> &ps);
 		void computeCrosschecks();
 

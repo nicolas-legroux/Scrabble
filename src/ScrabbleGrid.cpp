@@ -120,7 +120,7 @@ std::ostream& operator<<(std::ostream &os, const ScrabbleGrid &g){
 		}
 	}
 	*/
-	
+		
 	return os;
 }
 
@@ -258,6 +258,7 @@ std::pair<unsigned int, std::vector<char>> ScrabbleGrid::placeWord(const std::st
 		transpose();
 	}
 
+	// Compute the crosschecks
 	computeCrosschecks();
 
 	return returnData;
@@ -334,33 +335,7 @@ void ScrabbleGrid::computeCrosscheck(Crosscheck &crossCheck, const std::pair<std
 	}
 }
 
-std::pair<std::string, std::string> ScrabbleGrid::verticalCrosscheckHelper(unsigned int row, 
-		unsigned int column){
-	std::string prefix;
-	std::string suffix;
-	
-	unsigned int before = column;
-	while(before > 0 && !isAvailable(row, --before)){
-		prefix.push_back(get(row, before));
-	}
-	unsigned int after = column;
-	while(after < 14 && !isAvailable(row, ++after)){
-		suffix.push_back(get(row, after));
-	}
-	std::reverse(prefix.begin(), prefix.end());
-	
-	return {prefix, suffix};
-}
-
-void ScrabbleGrid::computeVerticalCrosscheck(unsigned int row, unsigned int column){
-	Crosscheck &crosscheck = getVerticalCrosscheck(row, column);
-	crosscheck.clear();
-	if(isAvailable(row, column)){
-		computeCrosscheck(crosscheck, verticalCrosscheckHelper(row, column));
-	}
-}
-
-std::pair<std::string, std::string> ScrabbleGrid::horizontalCrosscheckHelper(unsigned int row, 
+std::pair<std::string, std::string> ScrabbleGrid::findPrefixSuffix(unsigned int row, 
 		unsigned int column){
 	std::string prefix;
 	std::string suffix;
@@ -378,21 +353,28 @@ std::pair<std::string, std::string> ScrabbleGrid::horizontalCrosscheckHelper(uns
 	return {prefix, suffix};
 }
 
-void ScrabbleGrid::computeHorizontalCrosscheck(unsigned int row, unsigned int column){
+void ScrabbleGrid::computeCrosscheck(unsigned int row, unsigned int column){
 	Crosscheck &crosscheck = getHorizontalCrosscheck(row, column);
 	crosscheck.clear();
 	if(isAvailable(row, column)){
-		computeCrosscheck(crosscheck, horizontalCrosscheckHelper(row, column));
+		computeCrosscheck(crosscheck, findPrefixSuffix(row, column));
 	}
 }
 
 void ScrabbleGrid::computeCrosschecks(){
 	for(unsigned int row = 0; row<15; ++row){
 		for(unsigned int column=0; column<15; ++column){
-			computeHorizontalCrosscheck(row, column);
-			computeVerticalCrosscheck(row, column);
+			computeCrosscheck(row, column);
 		}
 	}
+
+	transpose();
+	for(unsigned int row=0; row<15; ++row){
+		for(unsigned int column = 0; column < 15; ++column){
+			computeCrosscheck(row, column);
+		}
+	}
+	transpose();
 }
 
 unsigned int ScrabbleGrid::firstAvailableColumn(unsigned int row){

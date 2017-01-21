@@ -18,7 +18,7 @@ int main() {
 	Trie trie(dict);
 	ScrabbleGrid grid(&trie);
 	ScrabbleStack stack;
-	ScrabbleManualRack rack;
+	ScrabbleRack rack(&stack);
 	
 	BestWordIA player(&rack, &grid);
 	
