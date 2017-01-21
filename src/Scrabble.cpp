@@ -18,9 +18,25 @@ int main() {
 	Trie trie(dict);
 	ScrabbleGrid grid(&trie);
 	ScrabbleStack stack;
-	ScrabbleRack rack(&stack);
+
+	std::cout << "Choose between automatic (type 'A') and manual (type 'M') rack : ";
+	char c;
+	std:: cin >> c;
+
+	ScrabbleRack *rack;
 	
-	BestWordIA player(&rack, &grid);
+	if(c == 'a' || c == 'A'){
+		rack = new ScrabbleRack(&stack);
+	}
+	else if(c == 'm' || c == 'M'){
+		rack = new ScrabbleManualRack();
+	}
+	else{
+		std::cout << "Incorrect value, exiting.";
+		return 0;
+	}
+	
+	BestWordIA player(rack, &grid);
 	
 	while(player.playTurn()){
 		std::cout << '\n' << grid << "\n\n\n";
