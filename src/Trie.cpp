@@ -97,15 +97,19 @@ void Trie::buildDictionary(int index, std::string *current, std::vector<std::str
 }
 
 bool Trie::checkWord(unsigned int idx, std::string::const_iterator start, 
-		std::string::const_iterator end, bool wasTerminal){
+		std::string::const_iterator end, bool wasTerminal, bool firstCall){
 	if (start == end){
 		return wasTerminal;
+	}
+
+	if(idx == 0 && !firstCall){
+		return false;
 	}
 
 	unsigned int i = idx;
 	do{
 		if(edgeList[i].getLetter() == *start){
-			return checkWord(edgeList[i].getOutwardNode(), ++start, end, edgeList[i].isTerminal());
+			return checkWord(edgeList[i].getOutwardNode(), ++start, end, edgeList[i].isTerminal(), false);
 		}
 	} while(!edgeList[i++].isLastEdge());
 

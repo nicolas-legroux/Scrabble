@@ -97,7 +97,7 @@ std::ostream& operator<<(std::ostream &os, const ScrabbleGrid &g){
 			os << '\n';
 		}
 	}	
-	
+
 	/*
 	std::cout << "Horizontal crosschecks :\n";
 

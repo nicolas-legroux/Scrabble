@@ -287,6 +287,10 @@ std::pair<bool, ScrabblePlayer::WordChoice> BestWordIA::generateWordChoice(){
 				bestScore = stats.first;
 				mostLetters = stats.second;
 			}
+			// Tranpose back, otherwise possible bug if numberHorizontalMoves == 0
+			else{
+				choices[i].transpose();
+			}
 		}
 		grid->transpose();
 	}

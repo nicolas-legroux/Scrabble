@@ -74,7 +74,7 @@ private:
 	void buildDictionary(int index, std::string *currentString, std::vector<std::string> *dict, 
 			bool currentlyAtRoot);
 	bool checkWord(unsigned int idx, std::string::const_iterator start, 
-			std::string::const_iterator end, bool wasTerminal);
+			std::string::const_iterator end, bool wasTerminal, bool firstCall);
 	unsigned int findPrefixNode(unsigned int node, std::string::const_iterator start, 
 			std::string::const_iterator end);
 public:
@@ -113,11 +113,11 @@ public:
 	unsigned int getSize() { return edgeList.size(); }
 
 	bool checkWord(const std::string &word) { 
-		return checkWord(0, word.cbegin(), word.cend(), false);
+		return checkWord(0, word.cbegin(), word.cend(), false, true);
 	}
 	
 	bool checkSuffix(unsigned int node, const std::string &suffix){
-		return checkWord(node, suffix.cbegin(), suffix.cend(), false);
+		return checkWord(node, suffix.cbegin(), suffix.cend(), false, true);
 	}
 };
 

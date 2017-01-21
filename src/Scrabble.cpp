@@ -9,7 +9,11 @@
 #include "ScrabblePlayer.hpp"
 
 int main() {
-	std::srand(std::time(0));
+
+	auto t = std::time(0);
+	std::cout << "Initialized random generator with " << t << "\n\n";
+	std::srand(t);
+
 	std::ifstream dict("./assets/dic_fr.txt");
 	Trie trie(dict);
 	ScrabbleGrid grid(&trie);
