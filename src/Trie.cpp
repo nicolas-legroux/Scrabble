@@ -112,3 +112,28 @@ bool Trie::checkWord(unsigned int idx, std::string::const_iterator start,
 	return false;
 }
 
+std::vector<Trie::Edge> Trie::getOutwardEdges(unsigned int node){
+	unsigned int i = node;
+	std::vector<Edge> edges;
+	do{
+		edges.emplace_back(edgeList[i].getLetter(), edgeList[i].getOutwardNode(), edgeList[i].isTerminal());
+	} while(!edgeList[i++].isLastEdge());
+	return edges;
+}
+
+unsigned int Trie::findPrefixNode(unsigned int node, 
+		std::string::const_iterator start, std::string::const_iterator end){
+	unsigned int i = node;
+	do{
+		if(edgeList[i].getLetter() == *start){
+			if((start+1) == end){
+				return edgeList[i].getOutwardNode();
+			}
+			else{
+				return findPrefixNode(edgeList[i].getOutwardNode(), start+1, end);
+			}
+		}
+	} while(!edgeList[i++].isLastEdge());
+	
+	return 0;
+}

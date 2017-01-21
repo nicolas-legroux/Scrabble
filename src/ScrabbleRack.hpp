@@ -34,7 +34,7 @@ const std::vector<int> LETTER_DISTRIBUTION_FR = {
 	1, // X
 	1, // Y
 	1, // Z
-	2  // BLANK
+	0  // BLANK
 };
 
 class ScrabbleStack{
@@ -58,21 +58,23 @@ class ScrabbleStack{
 };
 
 class ScrabbleRack{
-	private:
+	protected:
 		friend std::ostream& operator<<(std::ostream &os, const ScrabbleRack &rack);
 		std::vector<unsigned int> rack = std::vector<unsigned int>(27, 0);
 		unsigned int size = 0;
 		ScrabbleStack *stack;
+
+		ScrabbleRack() : stack(nullptr) { }
 	public:
 		ScrabbleRack(ScrabbleStack *_stack) : stack(_stack) { 
-			drawFromStack();
+			draw();
 		}
 		
 		// Check whether the stack from which the rack is drawn is empty
-		bool stackIsEmpty() { return stack->empty(); }
+		virtual bool stackIsEmpty() const { return stack->empty(); }
 		
 		// Draw letters from the stack to complete the rack
-		void drawFromStack();
+		virtual void draw();
 
 		// Empty the rack
 		void clear(); 
@@ -80,8 +82,49 @@ class ScrabbleRack{
 		// Remove letters from the rack
 		void remove(const std::vector<char> &letters);
 
+		// Manually remove letters
+		virtual void remove() {}
+
+		// Check whether the rack contains a certain letter
+		bool hasLetter(char c) const {
+ 			return rack[c-'A'] > 0;
+		}
+
+		// Check whether the rack contains the blank letter
+		bool hasBlank() const {
+			return hasLetter(BLANK);
+		}
+
+		void addLetter(char c){
+			++rack[c-'A'];
+			++size;
+		}
+		
+		void addBlank() { addLetter(BLANK); }
+
+		void removeBlank() { removeLetter(BLANK); }
+
+		void removeLetter(char c){
+			--rack[c-'A'];
+			--size;
+		}
+
 		// Check whether the rack is empty
 		bool empty() const { return size == 0; }
+
+		virtual ~ScrabbleRack() {} 
+};
+
+class ScrabbleManualRack : public ScrabbleRack{
+	private:
+		bool emptyStack = false;
+	public: 
+		ScrabbleManualRack() :  ScrabbleRack() {
+			draw();
+		}
+		bool stackIsEmpty() const override { return emptyStack; }
+		void draw() override;
+		void remove() override;
 };
 
 std::ostream& operator<<(std::ostream &os, const ScrabbleRack &rack);

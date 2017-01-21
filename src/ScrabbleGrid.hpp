@@ -6,7 +6,9 @@
 #include <iostream>
 #include <climits>
 #include <set>
+
 #include "Trie.hpp"
+#include "ScrabblePlayer.hpp"
 
 #define DOUBLE_CHAR 1
 #define TRIPLE_CHAR 2
@@ -42,6 +44,8 @@ const std::vector<unsigned int> LETTER_POINTS_FR = {
 	10 // Z
 };
 
+class BestWordIA;
+
 class ScrabbleGrid{
 	private:
 
@@ -50,7 +54,8 @@ class ScrabbleGrid{
 			private:
 				unsigned int data = 0;
 			public:
-				bool valid() const { return data != 0; }
+				bool valid() const { return data & (1<<30); }
+				void makeValid() { data |= (1<<30); }
 				void clear() { data = 0; }
 				void set(char c){
 					data |= (1 << (c - 'A'));
@@ -62,6 +67,7 @@ class ScrabbleGrid{
 
 		friend std::ostream& operator<<(std::ostream &os, const ScrabbleGrid &grid);
 		friend std::ostream& operator<<(std::ostream &os, const Crosscheck &crosscheck);
+		friend BestWordIA;
 		
 		// The grid
 		std::vector<char> grid = std::vector<char>(15*15);
@@ -138,30 +144,39 @@ class ScrabbleGrid{
 		std::pair<unsigned int, bool> computeAdjacentScore(unsigned int row, 
 				unsigned int column);
 		
-		// Compute the score of a word played horizontally. If the word is 
-		// to be played vertically, set the 'doTranspose' flag. If the word uses blank tiles, 
-		// the index of thoses tiles in the word should be specified
-		unsigned int computeScore(const std::string &word, unsigned int firstRow, 
-				unsigned int firstColumn, bool doTranspose, 
-				const std::set<unsigned int> &blanks = {});
-
 		// Compute horizontal and vertical crosschecks
 		std::pair<std::string, std::string> verticalCrosscheckHelper(unsigned int row, unsigned int column);
 		void computeVerticalCrosscheck(unsigned int row, unsigned int column);
 		std::pair<std::string, std::string> horizontalCrosscheckHelper(unsigned int row, unsigned int column);
 		void computeHorizontalCrosscheck(unsigned int row, unsigned int column);
+		void computeCrosscheck(Crosscheck &crosscheck, const std::pair<std::string, std::string> &ps);
+		void computeCrosschecks();
 
 	public:
 		ScrabbleGrid(Trie *_trie) : trie(_trie) { makeNewGrid(); }
 
+		// Compute the score of a word played horizontally. If the word is 
+		// to be played vertically, set the 'doTranspose' flag. If the word uses blank tiles, 
+		// the index of thoses tiles in the word should be specified
+		std::pair<unsigned int, std::vector<char>> computeScore(const std::string &word, unsigned int firstRow, 
+				unsigned int firstColumn, bool doTranspose, 
+				const std::set<unsigned int> &blanks = {});
+
 		// Place a new word in the grid. By default, the word is placed horizontally.
 		// Set the 'doTranspose' flag to place it vertically
-		unsigned int placeWord(const std::string &word, unsigned int firstRow, 
+		// Return the score and the letters that must come from the rack
+		std::pair<unsigned int, std::vector<char>> placeWord(const std::string &word, unsigned int firstRow, 
 				unsigned int firstColumn, bool doTranspose, 
 				const std::set<unsigned int> &blanks = {});
 		
 		// Tranpose the grid
 		void transpose();
+
+		unsigned int firstAvailableColumn(unsigned int row);
+
+		bool empty() { return isAvailable(7, 7); }
+
+		Trie* getTrie() { return trie; }
 };
 
 std::ostream& operator<<(std::ostream &os, const ScrabbleGrid &grid);

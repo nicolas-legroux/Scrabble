@@ -1,7 +1,9 @@
 #include <algorithm>
 #include <cassert>
+
 #include <sstream>
 #include "ScrabbleGrid.hpp"
+#include "ScrabbleRack.hpp"
 
 void ScrabbleGrid::makeNewGrid(){
 	std::fill(grid.begin(), grid.end(), 0);
@@ -12,6 +14,7 @@ void ScrabbleGrid::makeNewGrid(){
 	vcCrosschecks = &verticalCrosschecks;
 	
 	// Fill in Triple words
+	
 	for(unsigned int i=0; i<15; i += 7){
 		for(unsigned int j=0; j<15; j += 7){
 			get(i, j) = TRIPLE_WORD;
@@ -64,6 +67,7 @@ void ScrabbleGrid::makeNewGrid(){
 	get(7, 11) = DOUBLE_CHAR;
 
 	// Set the initial anchor
+	getHorizontalCrosscheck(7, 7).makeValid();
 	for(char c='A'; c <= 'Z'; ++c){
 		getHorizontalCrosscheck(7, 7).set(c);
 	}
@@ -93,7 +97,8 @@ std::ostream& operator<<(std::ostream &os, const ScrabbleGrid &g){
 			os << '\n';
 		}
 	}	
-
+	
+	/*
 	std::cout << "Horizontal crosschecks :\n";
 
 	for(unsigned int row = 0; row < 15; ++row){
@@ -114,6 +119,7 @@ std::ostream& operator<<(std::ostream &os, const ScrabbleGrid &g){
 			}
 		}
 	}
+	*/
 	
 	return os;
 }
@@ -139,12 +145,12 @@ void ScrabbleGrid::transpose(){
 	transposed = !transposed;	
 }
 
-unsigned int ScrabbleGrid::computeScore(const std::string &word, unsigned int row, 
+std::pair<unsigned int, std::vector<char>> ScrabbleGrid::computeScore(const std::string &word, unsigned int row, 
 		unsigned int column, bool doTranspose, const std::set<unsigned int> &blanks){
 	unsigned int adjacentScore = 0;
 	unsigned int wordScore = 0;
 	unsigned int wordMultiplier = 1;
-	unsigned int lettersUsedFromRack = 0;
+	std::vector<char> lettersFromRack;
 	
 	if(doTranspose){
 		transpose();
@@ -157,15 +163,20 @@ unsigned int ScrabbleGrid::computeScore(const std::string &word, unsigned int ro
 
 		if(isAvailable(row, column)){
 			
-			++lettersUsedFromRack;
-
 			// Add to current wordScore
 
 			unsigned int characterScore = 0;
 			
+			// Not a blank
 			if(blanks.find(i) == blanks.end()){
+				lettersFromRack.push_back(word[i]);
 				characterScore = LETTER_POINTS_FR[word[i] - 'A'];
 			}
+			else{
+				lettersFromRack.push_back(BLANK);
+			}
+
+
 			if(get(row, column) == DOUBLE_CHAR){
 				characterScore *= 2;
 			}
@@ -212,66 +223,44 @@ unsigned int ScrabbleGrid::computeScore(const std::string &word, unsigned int ro
 		transpose();
 	}
 
-	if(lettersUsedFromRack==7){
+	if(lettersFromRack.size()==7){
 		/* Scrabble ! */
 		adjacentScore += 50;
 	}
 
-	return adjacentScore + wordScore * wordMultiplier;
+	return {adjacentScore + wordScore * wordMultiplier, lettersFromRack};
 }
 
-unsigned int ScrabbleGrid::placeWord(const std::string &word, unsigned int row, unsigned int column, 
+std::pair<unsigned int, std::vector<char>> ScrabbleGrid::placeWord(const std::string &word, unsigned int row, unsigned int column, 
 		bool doTranspose, const std::set<unsigned int> &blanks){
 	if(doTranspose){
 		transpose();
 		std::swap(row, column);
 	}
 
-	unsigned int first_column = column;
-
-	unsigned int score = computeScore(word, row, column, false, blanks);
-
+	auto returnData = computeScore(word, row, column, false, blanks);
+	
 	for(unsigned int i=0; i < word.size(); ++i){
 
-		bool wasAvailable = isAvailable(row, column);
-
-		if(wasAvailable){
+		if(isAvailable(row, column)){
 			// Should a blank be added to the grid ?
 			if(blanks.find(i) != blanks.end()){
 				addBlank(row, column);
 			}
-			
-			// The current position can no longer be used as an anchor
-			getHorizontalCrosscheck(row, column).clear();
-			getVerticalCrosscheck(row, column).clear();
 		}
 
 		get(row, column) = word[i];
 		
-		if(wasAvailable){
-			if(row > 0){
-				computeHorizontalCrosscheck(row-1, column);
-			}
-			if(row < 14){
-				computeHorizontalCrosscheck(row+1, column);
-			}
-		}		
-		
 		++column;
-	}
-
-	if(first_column > 0){
-		computeVerticalCrosscheck(row, first_column -1);
-	}
-	if(column < 15){
-		computeVerticalCrosscheck(row, column);
 	}
 
 	if(doTranspose){
 		transpose();
 	}
 
-	return score;
+	computeCrosschecks();
+
+	return returnData;
 }
 
 std::pair<unsigned int, bool> ScrabbleGrid::computeAdjacentScore(unsigned int row, unsigned int column){
@@ -318,6 +307,33 @@ std::pair<unsigned int, bool> ScrabbleGrid::computeAdjacentScore(unsigned int ro
 	}
 }
 
+void ScrabbleGrid::computeCrosscheck(Crosscheck &crossCheck, const std::pair<std::string, std::string> &ps){
+	const std::string &prefix = ps.first;
+	const std::string &suffix = ps.second;
+	
+	if(!prefix.empty() || !suffix.empty()){
+		crossCheck.makeValid();
+	}
+
+	unsigned int node = 0;
+	if(!prefix.empty()){
+		node = trie->getPrefixNode(prefix);
+		if(node == 0){
+			return; 
+		}
+	}
+
+	if(node != 0 || !suffix.empty()){
+		for(char c = 'A'; c <= 'Z'; ++c){
+			std::stringstream ss;
+			ss << c << suffix;
+			if(trie->checkSuffix(node, ss.str())){
+				crossCheck.set(c);
+			}
+		}
+	}
+}
+
 std::pair<std::string, std::string> ScrabbleGrid::verticalCrosscheckHelper(unsigned int row, 
 		unsigned int column){
 	std::string prefix;
@@ -337,15 +353,10 @@ std::pair<std::string, std::string> ScrabbleGrid::verticalCrosscheckHelper(unsig
 }
 
 void ScrabbleGrid::computeVerticalCrosscheck(unsigned int row, unsigned int column){
+	Crosscheck &crosscheck = getVerticalCrosscheck(row, column);
+	crosscheck.clear();
 	if(isAvailable(row, column)){
-		auto prefixSuffix = verticalCrosscheckHelper(row, column);
-		for(char c = 'A'; c <= 'Z'; ++c){
-			std::stringstream ss;
-			ss << prefixSuffix.first << c << prefixSuffix.second;
-			if(trie->checkWord(ss.str())){
-				getVerticalCrosscheck(row, column).set(c);
-			}
-		}
+		computeCrosscheck(crosscheck, verticalCrosscheckHelper(row, column));
 	}
 }
 
@@ -368,15 +379,27 @@ std::pair<std::string, std::string> ScrabbleGrid::horizontalCrosscheckHelper(uns
 }
 
 void ScrabbleGrid::computeHorizontalCrosscheck(unsigned int row, unsigned int column){
+	Crosscheck &crosscheck = getHorizontalCrosscheck(row, column);
+	crosscheck.clear();
 	if(isAvailable(row, column)){
-		auto prefixSuffix = horizontalCrosscheckHelper(row, column);
-		for(char c = 'A'; c <= 'Z'; ++c){
-			std::stringstream ss;
-			ss << prefixSuffix.first << c << prefixSuffix.second;
-			if(trie->checkWord(ss.str())){
-				getHorizontalCrosscheck(row, column).set(c);
-			}
+		computeCrosscheck(crosscheck, horizontalCrosscheckHelper(row, column));
+	}
+}
+
+void ScrabbleGrid::computeCrosschecks(){
+	for(unsigned int row = 0; row<15; ++row){
+		for(unsigned int column=0; column<15; ++column){
+			computeHorizontalCrosscheck(row, column);
+			computeVerticalCrosscheck(row, column);
 		}
 	}
 }
 
+unsigned int ScrabbleGrid::firstAvailableColumn(unsigned int row){
+	for(unsigned int column = 0; column < 15; ++column){
+		if(isAvailable(row, column)){
+			return column;
+		}
+	}
+	return 15;
+}

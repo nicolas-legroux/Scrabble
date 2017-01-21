@@ -17,6 +17,8 @@ file(GLOB SRC_FILES
 	"${ROOT_DIR}/src/ScrabbleRack.cpp"
 	"${ROOT_DIR}/src/ScrabbleGrid.hpp"
 	"${ROOT_DIR}/src/ScrabbleGrid.cpp"
+	"${ROOT_DIR}/src/ScrabblePlayer.hpp"
+	"${ROOT_DIR}/src/ScrabblePlayer.cpp"
 )
 
 include_directories(${INCLUDE_DIR})

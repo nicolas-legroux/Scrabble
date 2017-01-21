@@ -28,7 +28,7 @@ std::vector<char> ScrabbleStack::drawLetters(unsigned int n){
 	return letters;
 }
 
-void ScrabbleRack::drawFromStack(){
+void ScrabbleRack::draw(){
 	unsigned int n = 7 - size;
 	std::vector<char> letters = stack->drawLetters(n);
 	for(char l : letters){
@@ -52,7 +52,46 @@ void ScrabbleRack::remove(const std::vector<char> &letters){
 	}
 }
 
+void ScrabbleManualRack::draw() {
+	std::cout << "The rack is currently missing " << (7 - size) << " letters. " <<
+		"Add the following to the rack : ";
+	std::string s;
+	std::cin >> s;
+	if(s.size() > (7-size)){
+		s.resize(7-size);
+	}
+	std::transform(s.begin(), s.end(), s.begin(), ::toupper);
+	for(char c : s){
+		if(c == '*'){
+			addBlank();
+		}
+		else{
+			addLetter(c);
+		}
+	}
+	if(size < 7){
+		std::cout << "Stack is now empty.\n";
+		emptyStack = true;
+	}
+}
+
+void ScrabbleManualRack::remove() {
+	std::cout << "Type the letters to remove from the rack : ";
+	std::string s;
+	std::cin >> s;
+	std::transform(s.begin(), s.end(), s.begin(), ::toupper);
+	for(char c : s){
+		if(c == '*'){
+			removeBlank();
+		}
+		else{
+			removeLetter(c);
+		}
+	}
+}
+
 std::ostream& operator<<(std::ostream &os, const ScrabbleRack &rack){
+	os << '{';
 	for(unsigned int i=0; i<rack.rack.size()-1; ++i){
 		for(unsigned int j=0; j<rack.rack[i]; ++j){
 			char c = 'A' + i;
@@ -63,6 +102,8 @@ std::ostream& operator<<(std::ostream &os, const ScrabbleRack &rack){
 	for(unsigned int j=0; j<rack.rack.back(); ++j){
 		os << '*';
 	}
-
+	os << '}';
 	return os;
 }
+
+

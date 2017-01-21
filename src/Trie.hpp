@@ -75,7 +75,21 @@ private:
 			bool currentlyAtRoot);
 	bool checkWord(unsigned int idx, std::string::const_iterator start, 
 			std::string::const_iterator end, bool wasTerminal);
+	unsigned int findPrefixNode(unsigned int node, std::string::const_iterator start, 
+			std::string::const_iterator end);
 public:
+	class Edge{
+		private:
+			char letter;
+			unsigned int nextNode;
+			bool terminal;
+		public:
+			Edge(char l, unsigned int next, bool t) : letter(l), nextNode(next), terminal(t) { }
+			char getLetter() const { return letter; }
+			unsigned int getNextNode() const { return nextNode; }
+			bool isTerminal() const { return terminal; };
+	};
+
 	Trie() { }
 
 	Trie(const std::vector<unsigned int> &trie){
@@ -87,11 +101,23 @@ public:
 	Trie(const std::vector<std::string> &dict); 	
 	
 	std::vector<TrieEdge> getEdgeList() const { return edgeList; }
+	
+	std::vector<Edge> getOutwardEdges(unsigned int node);
+
+	unsigned int getPrefixNode(const std::string &s){
+		return findPrefixNode(0, s.cbegin(), s.cend());
+	}
+	
 	std::vector<std::string> getDictionary();
+	
 	unsigned int getSize() { return edgeList.size(); }
 
 	bool checkWord(const std::string &word) { 
-		return checkWord(0, word.cbegin(), word.cend(), true);
+		return checkWord(0, word.cbegin(), word.cend(), false);
+	}
+	
+	bool checkSuffix(unsigned int node, const std::string &suffix){
+		return checkWord(node, suffix.cbegin(), suffix.cend(), false);
 	}
 };
 
