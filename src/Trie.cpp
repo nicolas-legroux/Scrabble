@@ -18,55 +18,82 @@ Trie::Trie(const std::vector<std::string> &dict){
 	buildTrie(sorted_dict, 0, sorted_dict.size(), 0);
 }
 
-std::vector<Trie::trie_constructor_helper> Trie::buildHelpers(const std::vector<std::string> &dict, unsigned int start, 
-		unsigned int end, unsigned int idx){
-	char current_c = '0';
-	std::vector<trie_constructor_helper> v;
+std::vector<Trie::TrieConstructorHelper> Trie::buildHelpers(const std::vector<std::string> &dict, 
+		unsigned int start, unsigned int end, unsigned int idx){
+	char currentLetter = 0;
+	std::vector<TrieConstructorHelper> newEdges;
 	for(unsigned int i = start; i < end; ++i){
-		if(dict[i][idx] != current_c){
-			current_c = dict[i][idx];
-			if(!v.empty()){
-				v.back().end = i;
+		if(dict[i][idx] != currentLetter){
+			currentLetter = dict[i][idx];
+			if(!newEdges.empty()){
+				newEdges.back().end = i;
 			}
-			v.emplace_back(current_c, i, (idx == dict[i].size() - 1));
+			newEdges.emplace_back(currentLetter, i, (idx == dict[i].size() - 1));
 		}
 	}
 
-	if(!v.empty()){
-		v.back().end = end;
+	if(!newEdges.empty()){
+		newEdges.back().end = end;
 	}
 
-	return v;
+	return newEdges;
 }
 
-void Trie::buildTrie(const std::vector<std::string> &dictionary, unsigned int start, unsigned int end,
-		unsigned int idx){
+// The dicionary is assumed to be sorted
+void Trie::buildTrie(const std::vector<std::string> &dictionary, 
+		unsigned int start, unsigned int end, unsigned int idx){
 	
-	auto helpers = buildHelpers(dictionary, start, end, idx);
 	unsigned int currentIdx = edgeList.size();
-
-	for(const auto &element: helpers){
-		TrieEdge trieEdge(element.c);
-		if(element.terminal){
+	
+	// Step 1 : compute the set of letters which will be used to label edges at
+	// the given position
+	auto newEdgeHelpers = buildHelpers(dictionary, start, end, idx);
+	for(const auto &newEdge: newEdgeHelpers){
+		TrieEdge trieEdge(newEdge.letter);
+		if(newEdge.terminal){
 			trieEdge.setTerminal(true);
 		}
 		edgeList.push_back(trieEdge);
-	}
-	
+	}	
 	edgeList.back().setLastEdge();
 
-	for(unsigned int i = 0; i < helpers.size(); ++i){
-		unsigned int next_start = helpers[i].start;
-		unsigned int next_end = helpers[i].end;
-		if(helpers[i].terminal && ((next_start+1) == next_end)){
-			// Done
+	// Step 2 : for each letter, recursively build the Trie
+	for(unsigned int i = 0; i < newEdgeHelpers.size(); ++i){
+		unsigned int next_start = newEdgeHelpers[i].start;
+		unsigned int next_end = newEdgeHelpers[i].end;
+
+		// The edge is terminal and there is only one element in this part of the tree, 
+		// so we are done
+		if(newEdgeHelpers[i].terminal && ((next_start+1) == next_end)){
 			continue;
 		}
-		if(helpers[i].terminal){
+
+		// If the edge is terminal, it won't be possible to extend the first word of the 
+		// range, so we can increment the first pointer
+		if(newEdgeHelpers[i].terminal){
 			++next_start;
 		}
-		edgeList[currentIdx + i].setOutwardNode(edgeList.size());
+
+		// Set the index of the next edge and recurse
+		edgeList[currentIdx + i].setNext(edgeList.size());
 		buildTrie(dictionary, next_start, next_end, idx+1);
+	}
+}
+
+void Trie::buildDictionary(unsigned int startNode, std::string *currentString, 
+		std::vector<std::string> *dict, bool currentlyAtRoot){
+	if(startNode != 0 || currentlyAtRoot){
+		unsigned int i = startNode;
+		do{
+			currentString->push_back(edgeList[i].getLetter());
+			if(edgeList[i].isTerminal()){
+				dict->push_back(*currentString);
+			}
+
+			buildDictionary(edgeList[i].getNext(), currentString, dict, false);
+			currentString->pop_back();
+
+		} while(!(edgeList[i++].isLastEdge()));
 	}
 }
 
@@ -79,65 +106,51 @@ std::vector<std::string> Trie::getDictionary(){
 	return dictionary;
 }
 
-void Trie::buildDictionary(int index, std::string *current, std::vector<std::string> *dict, 
-		bool currentlyAtRoot){
-	if(index != 0 || currentlyAtRoot){
-		int i = index;
-		do{
-			current->push_back(edgeList[i].getLetter());
-			if(edgeList[i].isTerminal()){
-				dict->push_back(*current);
-			}
-
-			buildDictionary(edgeList[i].getOutwardNode(), current, dict, false);
-			current->pop_back();
-
-		} while(!(edgeList[i++].isLastEdge()));
-	}
-}
-
-bool Trie::checkWord(unsigned int idx, std::string::const_iterator start, 
-		std::string::const_iterator end, bool wasTerminal, bool firstCall){
-	if (start == end){
-		return wasTerminal;
-	}
-
-	if(idx == 0 && !firstCall){
-		return false;
-	}
-
-	unsigned int i = idx;
+// Assume that start and end pointers are not equal
+bool Trie::checkWord(unsigned int startNode, std::string::const_iterator start, 
+		std::string::const_iterator end){
+	unsigned int i = startNode;
 	do{
 		if(edgeList[i].getLetter() == *start){
-			return checkWord(edgeList[i].getOutwardNode(), ++start, end, edgeList[i].isTerminal(), false);
+			++start;
+			if(start == end){
+				return edgeList[i].isTerminal();
+			}
+			if(edgeList[i].getNext() != 0){
+				return checkWord(edgeList[i].getNext(), start, end);
+			}
+			return false;
 		}
 	} while(!edgeList[i++].isLastEdge());
 
 	return false;
 }
 
-std::vector<Trie::Edge> Trie::getOutwardEdges(unsigned int node){
+std::vector<Trie::Edge> Trie::getEdges(unsigned int node){
 	unsigned int i = node;
 	std::vector<Edge> edges;
 	do{
-		edges.emplace_back(edgeList[i].getLetter(), edgeList[i].getOutwardNode(), edgeList[i].isTerminal());
+		edges.emplace_back(edgeList[i].getLetter(), edgeList[i].getNext(), edgeList[i].isTerminal());
 	} while(!edgeList[i++].isLastEdge());
 	return edges;
 }
 
-unsigned int Trie::findPrefixNode(unsigned int node, 
+// We assume that the prefix is valid (otherwise we return -1)
+unsigned int Trie::findPrefix(unsigned int startNode, 
 		std::string::const_iterator start, std::string::const_iterator end){
-	unsigned int i = node;
+	unsigned int i = startNode;
 	do{
 		if(edgeList[i].getLetter() == *start){
-			if((start+1) == end){
-				return edgeList[i].getOutwardNode();
+			++start;
+			if(start == end){
+				return edgeList[i].getNext();
 			}
-			else{
-				return findPrefixNode(edgeList[i].getOutwardNode(), start+1, end);
+			if(edgeList[i].getNext() != 0){
+				return findPrefix(edgeList[i].getNext(), start, end);
 			}
+			return -1;
 		}
 	} while(!edgeList[i++].isLastEdge());
 	
-	return 0;
+	return -1;
 }

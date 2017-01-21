@@ -325,7 +325,7 @@ void ScrabbleGrid::computeCrosscheck(Crosscheck &crossCheck, const std::pair<std
 
 	unsigned int node = 0;
 	if(!prefix.empty()){
-		node = trie->getPrefixNode(prefix);
+		node = trie->findPrefix(prefix);
 		if(node == 0){
 			return; 
 		}
