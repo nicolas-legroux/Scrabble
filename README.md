@@ -11,7 +11,9 @@ On UNIX :
 	cmake .
 	make
 	
-To compile the program you need to have QT5 installed.
+To compile the program you need to have QT v5 installed. On Ubuntu you can run :
+
+	sudo apt-get install qt5-default
 
 ## Running the program
 
