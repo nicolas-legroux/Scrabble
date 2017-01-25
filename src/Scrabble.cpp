@@ -1,3 +1,8 @@
+#include <QApplication>
+#include <QHBoxLayout>
+#include <QVBoxLayout>
+#include <QPushButton>
+
 #include <iostream>
 #include <cstdlib>
 #include <ctime>
@@ -7,8 +12,11 @@
 #include "ScrabbleRack.hpp"
 #include "ScrabbleGrid.hpp"
 #include "ScrabblePlayer.hpp"
+#include "ScrabbleMain.hpp"
 
-int main() {
+int main(int argc, char *argv[]) {
+
+	QApplication app(argc, argv);
 
 	auto t = std::time(0);
 	std::cout << "Initialized random generator with " << t << "\n\n";
@@ -16,30 +24,14 @@ int main() {
 
 	std::ifstream dict("./assets/dic_fr.txt");
 	Trie trie(dict);
+	
 	ScrabbleGrid grid(&trie);
 	ScrabbleStack stack;
+	ScrabbleRack rack;
+	BestWordIA player(&grid, &rack);
 
-	std::cout << "Choose between automatic (type 'A') and manual (type 'M') rack : ";
-	char c;
-	std:: cin >> c;
+	ScrabbleMain mainWindow(&grid, &rack, &player);
+	mainWindow.show();
 
-	ScrabbleRack *rack;
-	
-	if(c == 'a' || c == 'A'){
-		rack = new ScrabbleRack(&stack);
-	}
-	else if(c == 'm' || c == 'M'){
-		rack = new ScrabbleManualRack();
-	}
-	else{
-		std::cout << "Incorrect value, exiting.";
-		return 0;
-	}
-	
-	BestWordIA player(rack, &grid);
-	
-	while(player.playTurn()){
-		std::cout << '\n' << grid << "\n\n\n";
-	}
-
+	return app.exec();
 }

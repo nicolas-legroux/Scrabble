@@ -1,10 +1,19 @@
-#include "ScrabbleRack.hpp"
 #include <algorithm>
 #include <cassert>
 
-ScrabbleStack::ScrabbleStack(const std::vector<int> &letter_distribution){
-	for(unsigned int i=0; i<letter_distribution.size(); ++i){
-		for(int j=0; j<letter_distribution[i]; ++j){
+#include "ScrabbleRack.hpp"
+
+ScrabbleStack::ScrabbleStack(const std::vector<int> &letter_distribution) : 
+letterDistribution(letter_distribution) {
+	setFromDistribution();
+}
+
+void ScrabbleStack::setFromDistribution(){
+	
+	stack.clear();
+	
+	for(unsigned int i=0; i<letterDistribution.size(); ++i){
+		for(int j=0; j<letterDistribution[i]; ++j){
 			stack.push_back('A' + i);
 		}
 	}
@@ -30,11 +39,13 @@ std::vector<char> ScrabbleStack::drawLetters(unsigned int n){
 
 void ScrabbleRack::draw(){
 	unsigned int n = 7 - size;
-	std::vector<char> letters = stack->drawLetters(n);
-	for(char l : letters){
-		++rack[l-'A'];
+	if(stack){
+		std::vector<char> letters = stack->drawLetters(n);
+		for(char l : letters){
+			++rack[l-'A'];
+		}
+		size += letters.size();
 	}
-	size += letters.size();
 }
 
 void ScrabbleRack::clear() {
@@ -42,6 +53,14 @@ void ScrabbleRack::clear() {
 		rack[i] = 0;
 	}
 	size = 0;
+}
+
+void ScrabbleRack::reset(){
+	clear();
+	if(stack){
+		stack->setFromDistribution();
+	}
+	finished = false;
 }
 
 void ScrabbleRack::remove(const std::vector<char> &letters){
@@ -91,3 +110,12 @@ std::ostream& operator<<(std::ostream &os, const ScrabbleRack &rack){
 	return os;
 }
 
+std::vector<char> ScrabbleRack::getLetters(){
+	std::vector<char> l;
+	for(unsigned int i=0; i<rack.size(); ++i){
+		for(unsigned int j=0; j<rack[i]; ++j){
+			l.push_back('A'+i);
+		}
+	}
+	return l;
+}

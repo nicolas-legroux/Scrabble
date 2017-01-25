@@ -5,40 +5,11 @@
 #include <string>
 #include <iostream>
 
-const char BLANK = 'Z'+1;
-
-const std::vector<int> LETTER_DISTRIBUTION_FR = { 
-	9, // A 
-	2, // B
-	2, // C
-	3, // D
-	15, // E
-	2, // F
-	2, // G
-	2, // H
-	8, // I
-	1, // J
-	1, // K
-	5, // L
-	3, // M
-	6, // N
-	6, // O
-	2, // P
-	1, // Q
-	6, // R
-	6, // S
-	6, // T
-	6, // U
-	2, // V
-	1, // W
-	1, // X
-	1, // Y
-	1, // Z
-	2  // BLANK
-};
+#include "ScrabbleConstants.hpp"
 
 class ScrabbleStack{
 	private:
+		std::vector<int> letterDistribution;
 		std::vector<char> stack;
 		unsigned int start;
 		unsigned int end;
@@ -47,27 +18,34 @@ class ScrabbleStack{
 		// Build stack with initial letter distribution
 		ScrabbleStack(const std::vector<int> &letter_distribution = LETTER_DISTRIBUTION_FR);
 
+		// Build a new stack from the letter distribution
+		void setFromDistribution();
+
 		// Shuffle the remaining elements in the stack
 		void shuffle();
 
 		// Check whether the stack is empty
 		bool empty() const { return start == end; }
 
-		// Draw n letters (max, can be lower) from the stack
+		// Draw n letters from the stack. If there are less than n letters remaining, less than n letters 
+		// will be returned
 		std::vector<char> drawLetters(unsigned int n);
 };
 
 class ScrabbleRack{
 	protected:
 		friend std::ostream& operator<<(std::ostream &os, const ScrabbleRack &rack);
+		
+		// 26 letters + a blank
 		std::vector<unsigned int> rack = std::vector<unsigned int>(27, 0);
-		unsigned int size = 0;
+		
 		ScrabbleStack *stack;
+		
+		unsigned int size = 0;
+		bool finished = false;
 
-		ScrabbleRack() : stack(nullptr) { }
 	public:
-		ScrabbleRack(ScrabbleStack *_stack) : stack(_stack) { 
-			draw();
+		ScrabbleRack(ScrabbleStack *_stack = nullptr) : stack(_stack) { 
 		}
 		
 		// Check whether the stack from which the rack is drawn is empty
@@ -78,6 +56,9 @@ class ScrabbleRack{
 
 		// Empty the rack
 		void clear(); 
+
+		// Reset the rack (by also resetting the stack)
+		void reset();
 
 		// Remove letters from the rack
 		void remove(const std::vector<char> &letters);
@@ -92,26 +73,54 @@ class ScrabbleRack{
 			return hasLetter(BLANK);
 		}
 
+		// Add a letter to the rack
 		void addLetter(char c){
 			++rack[c-'A'];
 			++size;
 		}
 		
+		// Add a blank tile to the rack
 		void addBlank() { addLetter(BLANK); }
 
+		// Remove a blank tile from the rack
 		void removeBlank() { removeLetter(BLANK); }
 
+		// Remove a letter from the rack
 		void removeLetter(char c){
 			--rack[c-'A'];
 			--size;
 		}
 
+		// Check whether the letters should be drawn from the stack or from user input
+		bool requireManualDraw() {
+			return stack == nullptr;
+		}
+
+		// Add a set of letters to the rack
+		void addLetters(const std::vector<char> &v){
+			if(v.size() < 7 - size){
+				finished = true;
+			}
+			for(char c : v){
+				addLetter(c);
+			}
+		}
+
+		// Check whether there are still letters to be drawn
+		bool tilesFinished(){
+			return finished || (stack != nullptr && stack->empty());
+		}
+
 		// Check whether the rack is empty
 		bool empty() const { return size == 0; }
+
+		// Return the rack as a vector of chars
+		std::vector<char> getLetters();
 
 		virtual ~ScrabbleRack() {} 
 };
 
+// A classs used to play in the Terminal
 class ScrabbleManualRack : public ScrabbleRack{
 	private:
 		bool emptyStack = false;
@@ -126,3 +135,5 @@ class ScrabbleManualRack : public ScrabbleRack{
 std::ostream& operator<<(std::ostream &os, const ScrabbleRack &rack);
 
 #endif /* SCRABBLE_RACK_HPP_ */
+
+

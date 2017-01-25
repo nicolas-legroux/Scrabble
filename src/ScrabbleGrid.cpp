@@ -6,6 +6,7 @@
 #include "ScrabbleRack.hpp"
 
 void ScrabbleGrid::makeNewGrid(){
+
 	std::fill(grid.begin(), grid.end(), 0);
 	std::fill(horizontalCrosschecks.begin(), horizontalCrosschecks.end(), Crosscheck());
 	std::fill(verticalCrosschecks.begin(), verticalCrosschecks.end(), Crosscheck());
@@ -13,6 +14,10 @@ void ScrabbleGrid::makeNewGrid(){
 	hzCrosschecks = &horizontalCrosschecks;
 	vcCrosschecks = &verticalCrosschecks;
 	
+	transposed = false;
+	blanks.clear();
+	
+
 	// Fill in Triple words
 	
 	for(unsigned int i=0; i<15; i += 7){
@@ -99,9 +104,11 @@ std::ostream& operator<<(std::ostream &os, const ScrabbleGrid &g){
 	}	
 
 	if(!g.blanks.empty()){
-		std::cout << "Blanks : ";
+		std::cout << "\nBlanks : ";
 		for(auto blank : g.blanks){
-			std::cout << '(' << blank.first << ", " << blank.second << ") ";
+			char row = 'A' + blank.first;
+			int column = blank.second;
+			std::cout << row << column << ' ';
 		}
 		std::cout << '\n';
 	}
@@ -152,12 +159,13 @@ void ScrabbleGrid::transpose(){
 	transposed = !transposed;	
 }
 
-std::pair<unsigned int, std::vector<char>> ScrabbleGrid::computeScore(const std::string &word, unsigned int row, 
-		unsigned int column, bool doTranspose, const std::set<unsigned int> &blanks){
+std::pair<unsigned int, std::vector<unsigned int>> ScrabbleGrid::computeScore(
+		const std::string &word, unsigned int row, unsigned int column, 
+		bool doTranspose, const std::set<unsigned int> &blanks, bool calledFromPlace){
 	unsigned int adjacentScore = 0;
 	unsigned int wordScore = 0;
 	unsigned int wordMultiplier = 1;
-	std::vector<char> lettersFromRack;
+	std::vector<unsigned int> positionsFromRack;
 	
 	if(doTranspose){
 		transpose();
@@ -173,16 +181,15 @@ std::pair<unsigned int, std::vector<char>> ScrabbleGrid::computeScore(const std:
 			// Add to current wordScore
 
 			unsigned int characterScore = 0;
+			if(calledFromPlace)
+				std::cout << i << ' ';
 			
+			positionsFromRack.push_back(i);
+
 			// Not a blank
 			if(blanks.find(i) == blanks.end()){
-				lettersFromRack.push_back(word[i]);
 				characterScore = LETTER_POINTS_FR[word[i] - 'A'];
 			}
-			else{
-				lettersFromRack.push_back(BLANK);
-			}
-
 
 			if(get(row, column) == DOUBLE_CHAR){
 				characterScore *= 2;
@@ -192,6 +199,10 @@ std::pair<unsigned int, std::vector<char>> ScrabbleGrid::computeScore(const std:
 			}
 
 			wordScore += characterScore;
+
+			if(calledFromPlace){
+				std::cout << characterScore << ' ';
+			}
 
 			if(get(row, column) == DOUBLE_WORD){
 				wordMultiplier *= 2;
@@ -211,8 +222,16 @@ std::pair<unsigned int, std::vector<char>> ScrabbleGrid::computeScore(const std:
 				else if(get(row, column) == TRIPLE_WORD){
 					adjacent_multiplier *= 3;
 				}
-				adjacentScore += adjacent_multiplier * (adjacentS.first + characterScore);
+				unsigned int verticalScore = adjacent_multiplier * (adjacentS.first + characterScore);
+				
+				if (calledFromPlace)
+					std::cout << adjacentS.first << ' ' << adjacent_multiplier << ' ' << verticalScore;
+
+				adjacentScore += verticalScore;
 			}
+			
+			if(calledFromPlace)
+				std::cout << '\n';
 		}
 
 		else{
@@ -230,22 +249,22 @@ std::pair<unsigned int, std::vector<char>> ScrabbleGrid::computeScore(const std:
 		transpose();
 	}
 
-	if(lettersFromRack.size()==7){
+	if(positionsFromRack.size()==7){
 		/* Scrabble ! */
 		adjacentScore += 50;
 	}
 
-	return {adjacentScore + wordScore * wordMultiplier, lettersFromRack};
+	return {adjacentScore + wordScore * wordMultiplier, positionsFromRack};
 }
 
-std::pair<unsigned int, std::vector<char>> ScrabbleGrid::placeWord(const std::string &word, unsigned int row, unsigned int column, 
-		bool doTranspose, const std::set<unsigned int> &blanks){
+std::pair<unsigned int, std::vector<unsigned int>> ScrabbleGrid::placeWord(const std::string &word, 
+		unsigned int row, unsigned int column, bool doTranspose, const std::set<unsigned int> &blanks){
 	if(doTranspose){
 		transpose();
 		std::swap(row, column);
 	}
 
-	auto returnData = computeScore(word, row, column, false, blanks);
+	auto returnData = computeScore(word, row, column, false, blanks, true);
 	
 	for(unsigned int i=0; i < word.size(); ++i){
 
@@ -301,7 +320,7 @@ std::pair<unsigned int, bool> ScrabbleGrid::computeAdjacentScore(unsigned int ro
 		}
 
 		if(lettersBelow){
-			for(int i = row+1; row < 15; ++i){
+			for(int i = row+1; i < 15; ++i){
 				if(isAvailable(i, column)){
 					break;
 				}

@@ -6,16 +6,12 @@
 
 #include "ScrabbleRack.hpp"
 #include "ScrabbleGrid.hpp"
+#include "ScrabbleGridWidget.hpp"
 
 class ScrabbleGrid;
+class ScrabbleGridWidget;
 
 class ScrabblePlayer{
-	protected:
-		unsigned int score = 0;
-		unsigned int timesPlayed = 0;
-		ScrabbleRack *rack;
-		ScrabbleGrid *grid;
-
 	public:
 		class WordChoice{
 			private:
@@ -25,6 +21,8 @@ class ScrabblePlayer{
 				unsigned int column;
 				bool vertical;
 				std::set<unsigned int> blanks;
+				unsigned int score = 0;
+				std::vector<std::pair<unsigned int, unsigned int>> positionsChanged;
 			public:
 				WordChoice() : row(-1), column(-1), vertical(false) {} 
 				WordChoice(const std::string &s, unsigned int r, unsigned c, bool v, 
@@ -36,16 +34,33 @@ class ScrabblePlayer{
 							cp.pop();
 						}
 					}
-				std::pair<unsigned int, unsigned int> computeStatistics(ScrabbleGrid *grid);
+				std::pair<unsigned int, unsigned int> computeStatistics(ScrabbleGrid *grid) const;
 				unsigned int play(ScrabbleGrid *grid, ScrabbleRack *rack);
 				WordChoice& transpose();
-
+				const std::vector<std::pair<unsigned int, unsigned int>> & getPositionsChanged() const{
+					return positionsChanged; 
+				}
+				const std::string & getWord() const { return word; }
+				unsigned int getRow() const { return row; }
+				unsigned int getColumn() const { return column; }
+				bool isVertical() const { return vertical; }
+				unsigned int getScore() const { return score; }
 		};
-		ScrabblePlayer(ScrabbleRack *_rack, ScrabbleGrid *_grid) : rack(_rack), grid(_grid) { }
+	protected:
+		ScrabbleGrid *grid;
+		ScrabbleRack *rack;
+		unsigned int score = 0;
+		unsigned int timesPlayed = 0;
+		std::vector<WordChoice> plays;
+	public:
+		ScrabblePlayer(ScrabbleGrid *_grid, ScrabbleRack *r) : 
+			grid(_grid), rack(r) { }
 		void addToScore(unsigned int s) { score += s; }
 		unsigned int getScore() { return score; }
 		virtual std::pair<bool, WordChoice> generateWordChoice() = 0;
 		virtual bool playTurn();
+		const WordChoice & getLastPlay() const { return plays.back(); }
+		void reset();
 };
 
 class BestWordIA : public ScrabblePlayer{
@@ -62,7 +77,7 @@ class BestWordIA : public ScrabblePlayer{
 		void generateHorizontalWordChoices(bool vertical, std::vector<WordChoice> *choices);
 
 	public:
-		BestWordIA(ScrabbleRack *_rack, ScrabbleGrid *_grid) : ScrabblePlayer(_rack, _grid) {}
+		BestWordIA(ScrabbleGrid *g, ScrabbleRack *r) : ScrabblePlayer(g, r) {}
 		std::pair<bool, WordChoice> generateWordChoice() override;
 };
 

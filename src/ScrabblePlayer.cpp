@@ -4,25 +4,62 @@
 #include "ScrabblePlayer.hpp"
 
 std::ostream& operator<<(std::ostream &os, const ScrabblePlayer::WordChoice &wc){
-	os << "{ word=" << wc.word << " row=" << wc.row << " col=" << wc.column << " vcl=" << wc.vertical 
-		<< " blank=";
-	for(unsigned int blank : wc.blanks){
-		os << blank;
+	char row = 'A' + wc.row;
+	int column = wc.column+1;
+	os << '{' << wc.word << ' ' << row << column;
+	
+	if(wc.vertical){
+		os << " vertical";
+	}
+	else{
+		os << " horizontal";
+	}
+	
+	if(!wc.blanks.empty()){
+		os << " blank={";
+		for(unsigned int blank : wc.blanks){
+			os << (blank+1);
+		}
+		os << '}';
 	}
 
-	os << " }";
+	os << '}';
 
 	return os;
 }
 
-std::pair<unsigned int, unsigned int> ScrabblePlayer::WordChoice::computeStatistics(ScrabbleGrid *grid){
+std::pair<unsigned int, unsigned int> ScrabblePlayer::WordChoice::computeStatistics(ScrabbleGrid *grid) const {
 	auto result = grid->computeScore(word, row, column, vertical, blanks);
 	return {result.first, result.second.size()};
 }
 
-unsigned int ScrabblePlayer::WordChoice::play(ScrabbleGrid *grid, ScrabbleRack *rack){
+unsigned int ScrabblePlayer::WordChoice::play(ScrabbleGrid *grid, 
+		ScrabbleRack *rack){
 	auto result = grid->placeWord(word, row, column, vertical, blanks);
-	rack->remove(result.second);
+	
+	// Update the rack
+	std::vector<char> lettersToRemove;
+	for(auto i : result.second){
+		if(blanks.find(i) == blanks.end()){
+			lettersToRemove.push_back(word[i]);
+		}
+		else{
+			lettersToRemove.push_back(BLANK);
+		}
+	}
+	rack->remove(lettersToRemove);
+
+	for(auto i : result.second){
+		if(!vertical){
+			positionsChanged.push_back({row, column+i});
+		}
+		else{
+			positionsChanged.push_back({row+i, column});
+		}
+	}
+
+	score = result.first;
+
 	return result.first;
 }
 
@@ -46,18 +83,24 @@ bool ScrabblePlayer::playTurn(){
 			std::cout << "No legal word was found.\n";
 			return false;
 		}
-		std::cout << "Playing : " << wc.second << ".\n";
-		unsigned int s = wc.second.play(grid, rack);
+		WordChoice wordChoice = wc.second;
+		std::cout << "Playing : " << wordChoice << ".\n";
+		unsigned int s = wordChoice.play(grid, rack);
+		plays.push_back(wordChoice);
 		std::cout << "Scored " << s << " points.\n";
 		score += s;
 		std::cout << "Total score : " << score << ".\n";
-		
-		if(!rack->stackIsEmpty()){
-			rack->draw();
-		}
 
+		std::cout << '\n' << *grid << "\n\n";
+		
 		return true;
 	}
+}
+
+void ScrabblePlayer::reset(){
+	score = 0;
+	timesPlayed = 0;
+	plays.clear();
 }
 
 std::pair<unsigned int, std::vector<unsigned int>> BestWordIA::findAnchors(unsigned int row){

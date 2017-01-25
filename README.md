@@ -4,10 +4,14 @@ A program which plays Scrabble, in French. The program implements the algorithm 
 
 ## Installation
 
+On UNIX :
+
 	git clone https://github.com/nicolas-legroux/Scrabble.git
 	cd Scrabble
 	cmake .
 	make
+	
+To compile the program you need to have QT5 installed.
 
 ## Running the program
 
@@ -16,6 +20,3 @@ Launch the program in its root directory :
 	cd Scrabble
 	./Scrabble
 
-At launch, you get to choose whether the rack should be drawn automatically (using the letter distribution of the French Scrabble game) or if it should be manually entered at each iteration on the standard input.
-
-The blank tile is represented by the '*' character.
