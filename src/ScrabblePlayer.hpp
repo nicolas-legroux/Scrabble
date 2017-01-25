@@ -61,6 +61,7 @@ class ScrabblePlayer{
 		virtual bool playTurn();
 		const WordChoice & getLastPlay() const { return plays.back(); }
 		void reset();
+		virtual ~ScrabblePlayer() {}
 };
 
 class BestWordIA : public ScrabblePlayer{

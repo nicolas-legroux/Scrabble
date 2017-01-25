@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QLabel>
 #include <QPushButton>
+#include <QRadioButton>
 
 #include "ScrabbleGrid.hpp"
 #include "ScrabbleRack.hpp"
@@ -14,23 +15,39 @@ class ScrabbleMain : public QWidget{
 	Q_OBJECT
 	private:
 		ScrabbleGrid *grid;
-		ScrabbleRack *rack;
-		ScrabblePlayer *player;
-		ScrabbleGridWidget *gridWidget;
-		ScrabbleRackWidget *rackWidget;
-		QPushButton *button;
-		QLabel *infoWidget;
-		QLabel *scoreWidget;
+		ScrabblePlayer *player = nullptr;
+		ScrabbleStack *stack = nullptr;
+		ScrabbleRack *rack = nullptr;
+		ScrabbleGridWidget *gridWidget = nullptr;
+		ScrabbleRackWidget *rackWidget = nullptr;
+		QPushButton *button = nullptr;
+		QLabel *infoWidget = nullptr;
+		QLabel *scoreWidget = nullptr;
+		QRadioButton *automatic = nullptr;
+		QRadioButton *manual = nullptr;
 		bool gameIsFinished = false;
 		bool drawLetters = true;
 		bool noMoreLetters = false;
-	public:
-		ScrabbleMain(ScrabbleGrid *g, ScrabbleRack *r, ScrabblePlayer *p, QWidget *parent = nullptr);
 
+		void initialize();
+	public:
+		ScrabbleMain(ScrabbleGrid *grid, QWidget *parent = nullptr);
+		~ScrabbleMain(){
+			if(stack){
+				delete stack;
+			}
+			if(rack){
+				delete rack;
+			}
+			if(player){
+				delete player;
+			}
+		}
 	signals:
 
 	public slots:
 		void playTurn();
+		void chooseRack();
 };
 
 #endif

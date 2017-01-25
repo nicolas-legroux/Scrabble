@@ -1,9 +1,53 @@
 #include <QInputDialog>
+#include <QGroupBox>
+#include <QRadioButton>
 
 #include "ScrabbleMain.hpp"
 
-ScrabbleMain::ScrabbleMain(ScrabbleGrid *g, ScrabbleRack *r, ScrabblePlayer *p, QWidget *parent) : 
-	QWidget(parent), grid(g), rack(r), player(p) {
+ScrabbleMain::ScrabbleMain(ScrabbleGrid *g, QWidget *parent) : 
+	QWidget(parent), grid(g) {		
+	
+	QVBoxLayout *mainLayout = new QVBoxLayout();
+
+	QGroupBox *gb = new QGroupBox("Choisir un mode de sélection des lettres", this);
+	QVBoxLayout *layout = new QVBoxLayout();
+	automatic = new QRadioButton("Automatique");
+	manual = new QRadioButton("Manuel");
+	automatic->setChecked(true);
+	QPushButton *validation = new QPushButton("Valider");
+	layout->addWidget(automatic);
+	layout->addWidget(manual);
+	gb->setLayout(layout);
+
+	QObject::connect(validation, SIGNAL(clicked()), this, SLOT(chooseRack()));
+
+	mainLayout->addWidget(gb);
+	mainLayout->addWidget(validation);
+
+	setLayout(mainLayout);
+}
+
+void ScrabbleMain::chooseRack(){
+	if(!rack){
+		if(automatic->isChecked()){
+			stack = new ScrabbleStack;
+			rack = new ScrabbleRack(stack);
+		}
+		else{
+			rack = new ScrabbleRack;
+		}
+		QLayoutItem *child;
+		while ((child = this->layout()->takeAt(0)) != 0) {
+			delete child;
+		}
+		delete this->layout();
+		initialize();
+	}
+}	
+
+void ScrabbleMain::initialize(){
+	
+	player = new BestWordIA(grid, rack);
 	
 	QVBoxLayout *vLayout = new QVBoxLayout;
 

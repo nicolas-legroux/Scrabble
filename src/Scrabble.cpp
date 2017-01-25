@@ -26,11 +26,8 @@ int main(int argc, char *argv[]) {
 	Trie trie(dict);
 	
 	ScrabbleGrid grid(&trie);
-	ScrabbleStack stack;
-	ScrabbleRack rack;
-	BestWordIA player(&grid, &rack);
 
-	ScrabbleMain mainWindow(&grid, &rack, &player);
+	ScrabbleMain mainWindow(&grid);
 	mainWindow.show();
 
 	return app.exec();
