@@ -9,7 +9,7 @@ ScrabbleMain::ScrabbleMain(ScrabbleGrid *g, QWidget *parent) :
 	
 	QVBoxLayout *mainLayout = new QVBoxLayout();
 
-	QGroupBox *gb = new QGroupBox("Choisir un mode de sélection des lettres", this);
+	QGroupBox *gb = new QGroupBox("Choisir un mode de sélection des lettres");
 	QVBoxLayout *layout = new QVBoxLayout();
 	automatic = new QRadioButton("Automatique");
 	manual = new QRadioButton("Manuel");
@@ -19,12 +19,12 @@ ScrabbleMain::ScrabbleMain(ScrabbleGrid *g, QWidget *parent) :
 	layout->addWidget(manual);
 	gb->setLayout(layout);
 
-	QObject::connect(validation, SIGNAL(clicked()), this, SLOT(chooseRack()));
-
 	mainLayout->addWidget(gb);
 	mainLayout->addWidget(validation);
 
 	setLayout(mainLayout);
+	
+	QObject::connect(validation, SIGNAL(clicked()), this, SLOT(chooseRack()));
 }
 
 void ScrabbleMain::chooseRack(){
@@ -38,6 +38,7 @@ void ScrabbleMain::chooseRack(){
 		}
 		QLayoutItem *child;
 		while ((child = this->layout()->takeAt(0)) != 0) {
+			delete child->widget();
 			delete child;
 		}
 		delete this->layout();
