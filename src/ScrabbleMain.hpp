@@ -21,6 +21,8 @@ class ScrabbleMain : public QWidget{
 		ScrabbleGridWidget *gridWidget = nullptr;
 		ScrabbleRackWidget *rackWidget = nullptr;
 		QPushButton *button = nullptr;
+		QPushButton *discardButton = nullptr;
+		QPushButton *cancelButton = nullptr;
 		QLabel *infoWidget = nullptr;
 		QLabel *scoreWidget = nullptr;
 		QRadioButton *automatic = nullptr;
@@ -48,6 +50,9 @@ class ScrabbleMain : public QWidget{
 	public slots:
 		void playTurn();
 		void chooseRack();
+		void manualPlay(unsigned int row, unsigned int column);
+		void discardRack();	
+		void cancelLastPlay();
 };
 
 #endif

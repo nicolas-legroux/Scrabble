@@ -69,6 +69,17 @@ ScrabblePlayer::WordChoice& ScrabblePlayer::WordChoice::transpose(){
 	return *this;
 }
 
+bool ScrabblePlayer::playWordChoice(WordChoice &wordChoice){
+	std::cout << "Playing : " << wordChoice << ".\n";
+	unsigned int s = wordChoice.play(grid, rack);
+	plays.push_back(wordChoice);
+	std::cout << "Scored " << s << " points.\n";
+	score += s;
+	std::cout << "Total score : " << score << ".\n";
+	std::cout << '\n' << *grid << "\n\n";
+	return true;
+}
+
 bool ScrabblePlayer::playTurn(){
 	if(rack->empty()){
 		return false;
@@ -84,16 +95,7 @@ bool ScrabblePlayer::playTurn(){
 			return false;
 		}
 		WordChoice wordChoice = wc.second;
-		std::cout << "Playing : " << wordChoice << ".\n";
-		unsigned int s = wordChoice.play(grid, rack);
-		plays.push_back(wordChoice);
-		std::cout << "Scored " << s << " points.\n";
-		score += s;
-		std::cout << "Total score : " << score << ".\n";
-
-		std::cout << '\n' << *grid << "\n\n";
-		
-		return true;
+		return playWordChoice(wordChoice);
 	}
 }
 
@@ -366,4 +368,88 @@ std::pair<bool, ScrabblePlayer::WordChoice> BestWordIA::generateWordChoice(){
 	}
 
 	return {true, bestChoice};
+}
+
+bool BestWordIA::playWord(const std::string &word, unsigned int row, unsigned int column){
+
+	std::vector<WordChoice> choices;
+
+	// Generate all horizontal word choices
+	generateHorizontalWordChoices(false, &choices);	
+	unsigned int numberHorizontalMoves = choices.size();
+
+	// Generate vertical moves
+	if(!grid->isAvailable(7, 7)){
+		grid->transpose();	
+		generateHorizontalWordChoices(true, &choices);
+		grid->transpose();
+	}
+
+	WordChoice bestChoice;
+	unsigned int bestScore = 0;
+
+	for(unsigned int i=1; i<numberHorizontalMoves; ++i){
+		auto &wc = choices[i];
+		if(wc.getWord() == word && wc.getRow() == row && wc.getColumn() == column){
+			auto stats = wc.computeStatistics(grid);
+			if(stats.first > bestScore){
+				bestChoice = wc;
+				bestScore = stats.first;
+			}
+		}
+	}
+
+	if(numberHorizontalMoves != choices.size()){
+		grid->transpose();
+		for(unsigned int i=numberHorizontalMoves; i<choices.size(); ++i){
+			auto &wc = choices[i].transpose();
+			if(wc.getWord() == word && wc.getRow() == column && wc.getColumn() == row){
+				auto stats = wc.computeStatistics(grid);
+				if(stats.first > bestScore){
+					bestChoice = wc.transpose();
+					bestScore = stats.first;
+				}
+			}
+		}
+		grid->transpose();
+	}
+	
+	if(bestScore != 0){
+		playWordChoice(bestChoice);
+		return true;
+	}
+
+	else{
+		return false;
+	}
+}
+
+void ScrabblePlayer::cancelLastPlay(){
+	if(plays.size()>0){
+		WordChoice lastPlay = plays.back();
+		plays.pop_back();
+		score -= lastPlay.getScore();
+		--timesPlayed;
+		grid->reset(lastPlay.getPositionsChanged());
+		std::vector<unsigned int> indexes;
+		unsigned int start = (lastPlay.isVertical()) ? lastPlay.getRow() : lastPlay.getColumn();
+		
+		for(const auto &position : lastPlay.getPositionsChanged()){
+			if(lastPlay.isVertical()){
+				indexes.push_back(position.first - start);
+			}
+			else{
+				indexes.push_back(position.second - start);
+			}
+		}
+
+		for(auto i : indexes){
+			if(lastPlay.getBlanks().find(i) == lastPlay.getBlanks().end()){
+				rack->addLetter(lastPlay.getWord()[i]);
+			}
+			else{
+				rack->addBlank();
+			}
+		}
+	}
 }

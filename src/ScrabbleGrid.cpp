@@ -5,76 +5,97 @@
 #include "ScrabbleGrid.hpp"
 #include "ScrabbleRack.hpp"
 
-void ScrabbleGrid::makeNewGrid(){
-
-	std::fill(grid.begin(), grid.end(), 0);
-	std::fill(horizontalCrosschecks.begin(), horizontalCrosschecks.end(), Crosscheck());
-	std::fill(verticalCrosschecks.begin(), verticalCrosschecks.end(), Crosscheck());
-
-	hzCrosschecks = &horizontalCrosschecks;
-	vcCrosschecks = &verticalCrosschecks;
-	
-	transposed = false;
-	blanks.clear();
-	
+ScrabbleGrid::ScrabbleGrid(Trie *t) : trie(t) {
+	std::fill(defaultGrid.begin(), defaultGrid.end(), 0);
 
 	// Fill in Triple words
-	
 	for(unsigned int i=0; i<15; i += 7){
 		for(unsigned int j=0; j<15; j += 7){
-			get(i, j) = TRIPLE_WORD;
+			getDefaultGrid(i, j) = TRIPLE_WORD;
 		}
 	}
 
 	// Fill in Double words
 	for(unsigned int i=1; i<14; ++i){
-		get(i, i) = DOUBLE_WORD;
-		get(i, 14-i) = DOUBLE_WORD;
+		getDefaultGrid(i, i) = DOUBLE_WORD;
+		getDefaultGrid(i, 14-i) = DOUBLE_WORD;
 	}
 
 	// Fill in Triple characters
 	for(unsigned int i=1; i<15; i += 4){
 		for(unsigned int j=1; j<15; j += 4){
-			if(get(i, j) == 0){
-				get(i, j) = TRIPLE_CHAR;
+			if(getDefaultGrid(i, j) == 0){
+				getDefaultGrid(i, j) = TRIPLE_CHAR;
 			}
 		}
 	}
-	get(5, 5) = TRIPLE_CHAR;
-	get(5, 9) = TRIPLE_CHAR;
-	get(9, 5) = TRIPLE_CHAR;
-	get(9, 9) = TRIPLE_CHAR;
+	getDefaultGrid(5, 5) = TRIPLE_CHAR;
+	getDefaultGrid(5, 9) = TRIPLE_CHAR;
+	getDefaultGrid(9, 5) = TRIPLE_CHAR;
+	getDefaultGrid(9, 9) = TRIPLE_CHAR;
 
 	// Fill in double characters
-	get(0, 3) = DOUBLE_CHAR;
-	get(0, 11) = DOUBLE_CHAR;
-	get(14, 3) = DOUBLE_CHAR;
-	get(14, 11) = DOUBLE_CHAR;
-	get(2, 6) = DOUBLE_CHAR;
-	get(2, 8) = DOUBLE_CHAR;
-	get(12, 6) = DOUBLE_CHAR;
-	get(12, 8) = DOUBLE_CHAR;
-	get(3, 0) = DOUBLE_CHAR;
-	get(3, 7) = DOUBLE_CHAR;
-	get(3, 14) = DOUBLE_CHAR;
-	get(11, 0) = DOUBLE_CHAR;
-	get(11, 7) = DOUBLE_CHAR;
-	get(11, 14) = DOUBLE_CHAR;
-	get(6, 2) = DOUBLE_CHAR;
-	get(6, 6) = DOUBLE_CHAR;
-	get(6, 8) = DOUBLE_CHAR;
-	get(6, 12) = DOUBLE_CHAR;
-	get(8, 2) = DOUBLE_CHAR;
-	get(8, 6) = DOUBLE_CHAR;
-	get(8, 8) = DOUBLE_CHAR;
-	get(8, 12) = DOUBLE_CHAR;
-	get(7, 3) = DOUBLE_CHAR;
-	get(7, 11) = DOUBLE_CHAR;
+	getDefaultGrid(0, 3) = DOUBLE_CHAR;
+	getDefaultGrid(0, 11) = DOUBLE_CHAR;
+	getDefaultGrid(14, 3) = DOUBLE_CHAR;
+	getDefaultGrid(14, 11) = DOUBLE_CHAR;
+	getDefaultGrid(2, 6) = DOUBLE_CHAR;
+	getDefaultGrid(2, 8) = DOUBLE_CHAR;
+	getDefaultGrid(12, 6) = DOUBLE_CHAR;
+	getDefaultGrid(12, 8) = DOUBLE_CHAR;
+	getDefaultGrid(3, 0) = DOUBLE_CHAR;
+	getDefaultGrid(3, 7) = DOUBLE_CHAR;
+	getDefaultGrid(3, 14) = DOUBLE_CHAR;
+	getDefaultGrid(11, 0) = DOUBLE_CHAR;
+	getDefaultGrid(11, 7) = DOUBLE_CHAR;
+	getDefaultGrid(11, 14) = DOUBLE_CHAR;
+	getDefaultGrid(6, 2) = DOUBLE_CHAR;
+	getDefaultGrid(6, 6) = DOUBLE_CHAR;
+	getDefaultGrid(6, 8) = DOUBLE_CHAR;
+	getDefaultGrid(6, 12) = DOUBLE_CHAR;
+	getDefaultGrid(8, 2) = DOUBLE_CHAR;
+	getDefaultGrid(8, 6) = DOUBLE_CHAR;
+	getDefaultGrid(8, 8) = DOUBLE_CHAR;
+	getDefaultGrid(8, 12) = DOUBLE_CHAR;
+	getDefaultGrid(7, 3) = DOUBLE_CHAR;
+	getDefaultGrid(7, 11) = DOUBLE_CHAR;
 
+	makeNewGrid();
+}
+
+void ScrabbleGrid::makeNewGrid(){
+	// Set the grid using the initial grid
+	std::copy(defaultGrid.cbegin(), defaultGrid.cend(), grid.begin());
+	
+	// Set the crosschecks
+	std::fill(horizontalCrosschecks.begin(), horizontalCrosschecks.end(), Crosscheck());
+	std::fill(verticalCrosschecks.begin(), verticalCrosschecks.end(), Crosscheck());
+	hzCrosschecks = &horizontalCrosschecks;
+	vcCrosschecks = &verticalCrosschecks;
 	// Set the initial anchor
 	getHorizontalCrosscheck(7, 7).makeValid();
 	for(char c='A'; c <= 'Z'; ++c){
 		getHorizontalCrosscheck(7, 7).set(c);
+	}
+	
+	transposed = false;
+
+	blanks.clear();	
+}
+
+void ScrabbleGrid::reset(const std::vector<std::pair<unsigned int, unsigned int>> &positions){
+	for(const auto &position : positions){
+		get(position.first, position.second) = getDefaultGrid(position.first, position.second);
+		blanks.erase({position.first, position.second});
+	}
+
+	computeCrosschecks();
+
+	if(isAvailable(7, 7)){
+		getHorizontalCrosscheck(7, 7).makeValid();
+		for(char c='A'; c <= 'Z'; ++c){
+			getHorizontalCrosscheck(7, 7).set(c);
+		}
 	}
 }
 

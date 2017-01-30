@@ -1,7 +1,9 @@
 #include "ScrabbleGridWidget.hpp"
+#include "ScrabbleMain.hpp"
+
 #include <QGridLayout>
 
-ScrabbleGridWidget::ScrabbleGridWidget(QWidget *parent) : QWidget(parent),
+ScrabbleGridWidget::ScrabbleGridWidget(ScrabbleMain *main, QWidget *parent) : QWidget(parent),
     gridElements(15*15), emptyColors(15*15, DEFAULT_COLOR){
 
     // COLORS
@@ -69,6 +71,9 @@ ScrabbleGridWidget::ScrabbleGridWidget(QWidget *parent) : QWidget(parent),
     for(unsigned int i=0; i<15; ++i){
         for(unsigned int j=0; j<15; ++j){
             get(i, j) = new ScrabbleGridElement(i, j, getColor(i, j));
+			get(i, j)->setCursor(Qt::PointingHandCursor);
+			QObject::connect(get(i, j), SIGNAL(clicked(unsigned int, unsigned int)), main, 
+					SLOT(manualPlay(unsigned int, unsigned int)));
             layout->addWidget(get(i, j), i, j);
         }
     }

@@ -59,3 +59,7 @@ void ScrabbleGridElement::resetBorderColor(){
 	borderColor = DEFAULT_BORDER_COLOR;
 	this->setCSS();
 }
+
+void ScrabbleGridElement::mousePressEvent(QMouseEvent* event){
+	emit clicked(row, column);
+}

@@ -37,6 +37,12 @@ std::vector<char> ScrabbleStack::drawLetters(unsigned int n){
 	return letters;
 }
 
+void ScrabbleStack::discard(const std::vector<char> &letters){
+	stack.insert(stack.end(), letters.cbegin(), letters.cend());
+	end = stack.size();
+	shuffle();
+}
+
 void ScrabbleRack::draw(){
 	unsigned int n = 7 - size;
 	if(stack){
@@ -118,4 +124,11 @@ std::vector<char> ScrabbleRack::getLetters(){
 		}
 	}
 	return l;
+}
+
+void ScrabbleRack::discard(){
+	if(stack){
+		stack->discard(getLetters());
+	}
+	clear();
 }

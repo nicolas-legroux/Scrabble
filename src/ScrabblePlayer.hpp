@@ -41,6 +41,7 @@ class ScrabblePlayer{
 					return positionsChanged; 
 				}
 				const std::string & getWord() const { return word; }
+				const std::set<unsigned int> & getBlanks() const { return blanks; }
 				unsigned int getRow() const { return row; }
 				unsigned int getColumn() const { return column; }
 				bool isVertical() const { return vertical; }
@@ -58,9 +59,12 @@ class ScrabblePlayer{
 		void addToScore(unsigned int s) { score += s; }
 		unsigned int getScore() { return score; }
 		virtual std::pair<bool, WordChoice> generateWordChoice() = 0;
-		virtual bool playTurn();
+		bool playTurn();
+		bool playWordChoice(WordChoice &);
+		virtual bool playWord(const std::string &s, unsigned int row, unsigned int column) = 0;
 		const WordChoice & getLastPlay() const { return plays.back(); }
 		void reset();
+		void cancelLastPlay();
 		virtual ~ScrabblePlayer() {}
 };
 
@@ -80,6 +84,7 @@ class BestWordIA : public ScrabblePlayer{
 	public:
 		BestWordIA(ScrabbleGrid *g, ScrabbleRack *r) : ScrabblePlayer(g, r) {}
 		std::pair<bool, WordChoice> generateWordChoice() override;
+		bool playWord(const std::string &s, unsigned int row, unsigned int column);
 };
 
 std::ostream& operator<<(std::ostream &os, const ScrabblePlayer::WordChoice &wc);

@@ -6,6 +6,7 @@
 #include <QString>
 
 class ScrabbleGridElement : public QFrame{
+	Q_OBJECT
 private:
     unsigned int row;
     unsigned int column;
@@ -14,9 +15,10 @@ private:
     QLabel *letter;
     QLabel *score;
 	void setCSS();
-
+protected:
+	void mousePressEvent(QMouseEvent* event);
 public:
-    ScrabbleGridElement(unsigned int _r, unsigned int _c, const QString &_color,  
+    explicit ScrabbleGridElement(unsigned int _r, unsigned int _c, const QString &_color,  
 			unsigned int scoreHorizontalOffset = 36,
 			unsigned int scoreVerticalOffset = 25);
     void setLetter(char c);
@@ -26,6 +28,8 @@ public:
     void setBackgroundColor(const QString &color);
 	void setBorderColor(const QString &color);
 	void resetBorderColor();
+signals:
+	void clicked(unsigned int row, unsigned int column);
 };
 
 #endif // SCRABBLEGRIDELEMENT_H

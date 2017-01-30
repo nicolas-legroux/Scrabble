@@ -41,6 +41,9 @@ class ScrabbleGrid{
 		// The grid
 		std::vector<char> grid = std::vector<char>(15*15);
 		
+		// The empty grid used to reset elements
+		std::vector<char> defaultGrid = std::vector<char>(15*15);
+		
 		// The crosschecks
 		std::vector<Crosscheck> horizontalCrosschecks = std::vector<Crosscheck>(15*15);
 		std::vector<Crosscheck> verticalCrosschecks = std::vector<Crosscheck>(15*15);
@@ -63,6 +66,12 @@ class ScrabbleGrid{
 		char & get(unsigned int row, unsigned int column) { return grid[15*row + column]; }
 		const char & get(unsigned int row, unsigned int column) const { 
 			return grid[15*row + column]; 
+		}
+		
+		// Helper functions for the default grid
+		char & getDefaultGrid(unsigned int row, unsigned int column) { return defaultGrid[15*row + column]; }
+		const char & getDefaultGrid(unsigned int row, unsigned int column) const { 
+			return defaultGrid[15*row + column]; 
 		}
 		
 		// Helper functions for the crosschecks
@@ -118,8 +127,8 @@ class ScrabbleGrid{
 		void computeCrosschecks();
 
 	public:
-		ScrabbleGrid(Trie *_trie) : trie(_trie) { makeNewGrid(); }
-		
+		ScrabbleGrid(Trie *_trie);
+
 		// Initialize a new grid
 		void makeNewGrid();
 
@@ -145,6 +154,8 @@ class ScrabbleGrid{
 		bool empty() { return isAvailable(7, 7); }
 
 		Trie* getTrie() { return trie; }
+
+		void reset(const std::vector<std::pair<unsigned int, unsigned int>> &positions);
 };
 
 std::ostream& operator<<(std::ostream &os, const ScrabbleGrid &grid);

@@ -30,6 +30,9 @@ class ScrabbleStack{
 		// Draw n letters from the stack. If there are less than n letters remaining, less than n letters 
 		// will be returned
 		std::vector<char> drawLetters(unsigned int n);
+
+		// Discard some letters to push them back in the stack
+		void discard(const std::vector<char> &letters);
 };
 
 class ScrabbleRack{
@@ -116,6 +119,9 @@ class ScrabbleRack{
 
 		// Return the rack as a vector of chars
 		std::vector<char> getLetters();
+
+		// Discard the entire rack
+		void discard();
 
 		virtual ~ScrabbleRack() {} 
 };

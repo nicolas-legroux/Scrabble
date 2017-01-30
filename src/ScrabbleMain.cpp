@@ -49,37 +49,50 @@ void ScrabbleMain::chooseRack(){
 void ScrabbleMain::initialize(){
 	
 	player = new BestWordIA(grid, rack);
-	
-	QVBoxLayout *vLayout = new QVBoxLayout;
-
-	QHBoxLayout *layout = new QHBoxLayout;
-
-	gridWidget = new ScrabbleGridWidget;
+	gridWidget = new ScrabbleGridWidget(this);
 	rackWidget = new ScrabbleRackWidget;
 	button = new QPushButton("Tirer des lettres");
-	button->setFont(QFont("Aria", 16));
-	QWidget *rightWidget = new QWidget;
+	discardButton = new QPushButton("Jeter les lettres");
+	cancelButton = new QPushButton("Annuler");
+	button->setFont(QFont("Aria", 13));
+	discardButton->setFont(QFont("Aria", 13));
+	cancelButton->setFont(QFont("Aria", 13));
 
-	button->setFixedWidth(300);
+	QWidget * buttonContainer = new QWidget;
+	QHBoxLayout * buttonLayout = new QHBoxLayout;
+	buttonLayout->addWidget(button);
+	buttonLayout->addWidget(discardButton);
+	buttonLayout->addWidget(cancelButton);
+	buttonContainer->setLayout(buttonLayout);
+
+	// button->setFixedWidth(300);
 	QObject::connect(button, SIGNAL(clicked()), this, SLOT(playTurn()));
+	QObject::connect(discardButton, SIGNAL(clicked()), this, SLOT(discardRack()));
+	QObject::connect(cancelButton, SIGNAL(clicked()), this, SLOT(cancelLastPlay()));
+
+	discardButton->setEnabled(false);
+	cancelButton->setEnabled(false);
 
 	infoWidget = new QLabel();
 	infoWidget->setFont(QFont("Arial", 13));
 	infoWidget->setAlignment(Qt::AlignCenter);
 
-	scoreWidget = new QLabel("Current score : 0");
+	scoreWidget = new QLabel("Score actuel : 0");
 	scoreWidget->setFont(QFont("Arial", 16));
 	scoreWidget->setAlignment(Qt::AlignCenter);
 
+	QVBoxLayout *vLayout = new QVBoxLayout;
 	vLayout->addWidget(rackWidget);
-	vLayout->addWidget(button);
+	vLayout->addWidget(buttonContainer);
 	vLayout->addWidget(infoWidget);
 	vLayout->addWidget(scoreWidget);
 	vLayout->setAlignment(rackWidget, Qt::AlignHCenter);
 	vLayout->setAlignment(button, Qt::AlignHCenter);
-
+	
+	QWidget *rightWidget = new QWidget;
 	rightWidget->setLayout(vLayout);
 
+	QHBoxLayout *layout = new QHBoxLayout;
 	layout->addWidget(gridWidget);
 	layout->addWidget(rightWidget);
 	
@@ -101,7 +114,6 @@ void ScrabbleMain::playTurn() {
 				return;
 			}
 			auto s = letters.toStdString();
-			std::cout << s << '\n';
 			std::transform(s.begin(), s.end(), s.begin(), 
 					::toupper);
 			std::vector<char> lettersToAdd;
@@ -128,8 +140,10 @@ void ScrabbleMain::playTurn() {
 			button->setText("Jouer le meilleur coup");
 		}
 		else{
-			button->setText("Reinitialiser la grille");
+			button->setText("Réinitialiser");
 		}
+		discardButton->setEnabled(true);
+		cancelButton->setEnabled(false);
 	}
 	else{
 		if(!gameIsFinished){
@@ -137,14 +151,15 @@ void ScrabbleMain::playTurn() {
 			if(ok){
 				const auto &lastPlay = player->getLastPlay();
 				gridWidget->updatePositions(grid, lastPlay.getPositionsChanged());
-				QString info = "Played '" + QString::fromStdString(lastPlay.getWord()) + "' and scored "
+				QString info = "Le mot '" + QString::fromStdString(lastPlay.getWord()) + "' rapporte "
 					+ QString::number(lastPlay.getScore()) + " points.";
 				infoWidget->setText(info);
 				rackWidget->updateLetters(rack->getLetters());
+				cancelButton->setEnabled(true);
 			}
 			else{
 				gameIsFinished = true;
-				infoWidget->setText("No legal move was found.");
+				infoWidget->setText("Pas de mot valide trouvé avec cette configuration.");
 			}
 
 			drawLetters = !rack->tilesFinished();
@@ -152,13 +167,17 @@ void ScrabbleMain::playTurn() {
 			if(!drawLetters && rack->empty()){
 				gameIsFinished = true;
 			}
-			scoreWidget->setText("Current score : " + QString::number(player->getScore()));
+			scoreWidget->setText("Score actuel : " + QString::number(player->getScore()));
 			
 			if(drawLetters){
 				button->setText("Tirer des lettres");
 			}
 			else if(gameIsFinished){
-				button->setText("Reinitialiser la grille");
+				button->setText("Réinitialiser");
+			}
+
+			if(rack->empty() || !drawLetters){
+				discardButton->setEnabled(false);
 			}
 		}
 		else{
@@ -175,10 +194,88 @@ void ScrabbleMain::playTurn() {
 			rack->reset();
 			rackWidget->updateLetters(rack->getLetters());
 			infoWidget->setText("");
-			scoreWidget->setText("Current score : 0");
+			scoreWidget->setText("Score actuel : 0");
 			gameIsFinished = false;
 			drawLetters = true;
 			noMoreLetters = false;
+			discardButton->setEnabled(false);
+			cancelButton->setEnabled(false);
 		}
 	}
+}
+
+void ScrabbleMain::manualPlay(unsigned int row, unsigned int column){
+	if(!drawLetters && !gameIsFinished){
+		bool ok = false;
+		QString letters = QInputDialog::getText(this, "Tirage de lettres", 
+					"Indiquer le mot à jouer.", 
+					QLineEdit::Normal, QString(), &ok);
+		if(!ok){
+			return;
+		}
+		auto s = letters.toStdString();
+		std::transform(s.begin(), s.end(), s.begin(), 
+					::toupper);
+		ok = player->playWord(s, row, column);
+		
+		if(!ok){
+			return;
+		}
+		
+		const auto &lastPlay = player->getLastPlay();
+		gridWidget->updatePositions(grid, lastPlay.getPositionsChanged());
+		QString info = "Le mot '" + QString::fromStdString(lastPlay.getWord()) + "' rapporte "
+			+ QString::number(lastPlay.getScore()) + " points.";
+		infoWidget->setText(info);
+		rackWidget->updateLetters(rack->getLetters());
+			
+		drawLetters = !rack->tilesFinished();
+		if(!drawLetters && rack->empty()){
+			gameIsFinished = true;
+		}
+
+		scoreWidget->setText("Score actuel : " + QString::number(player->getScore()));
+			
+		if(drawLetters){
+			button->setText("Tirer des lettres");
+		}
+		
+		else if(gameIsFinished){
+			button->setText("Réinitialiser");
+		}
+
+		if(rack->empty() || !drawLetters){
+			discardButton->setEnabled(false);
+		}
+
+		cancelButton->setEnabled(true);
+	}
+}
+
+void ScrabbleMain::discardRack(){
+	if(!gameIsFinished && !rack->empty() && !noMoreLetters){
+		rack->discard();
+		rackWidget->updateLetters({});
+		button->setText("Tirer des lettres");
+		drawLetters = true;
+		discardButton->setEnabled(false);
+		cancelButton->setEnabled(false);
+	}
+}
+
+void ScrabbleMain::cancelLastPlay(){
+	auto lastPlay = player->getLastPlay();
+	player->cancelLastPlay();
+	gridWidget->updatePositions(grid, lastPlay.getPositionsChanged());
+	QString info = "Annulation du mot '" + QString::fromStdString(lastPlay.getWord()) + "' qui a rapporté "
+		+ QString::number(lastPlay.getScore()) + " points.";
+	infoWidget->setText(info);
+	rackWidget->updateLetters(rack->getLetters());
+
+	scoreWidget->setText("Score actuel : " + QString::number(player->getScore()));
+	
+	drawLetters = false;
+	gameIsFinished = false;
+	cancelButton->setEnabled(false);
+	button->setText("Jouer le meilleur coup");
 }

@@ -10,6 +10,7 @@
 #include "ScrabbleGrid.hpp"
 
 class ScrabbleGrid;
+class ScrabbleMain;
 
 const QString DOUBLE_CHAR_COLOR = "#A3BBDB";
 const QString TRIPLE_CHAR_COLOR = "#0088CF";
@@ -29,7 +30,7 @@ private:
     QString & getColor(unsigned int row, unsigned int column) { return emptyColors[15*row + column]; }
 
 public:
-    explicit ScrabbleGridWidget(QWidget *parent = 0);
+    explicit ScrabbleGridWidget(ScrabbleMain *main, QWidget *parent = 0);
     void placeLetter(unsigned int row, unsigned int column, char letter, int score);
 	void updatePositions(ScrabbleGrid *grid, 
 			const std::vector<std::pair<unsigned int, unsigned int>> &positions);
