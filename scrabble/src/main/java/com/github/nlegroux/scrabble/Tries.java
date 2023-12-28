@@ -16,31 +16,36 @@
 
 package com.github.nlegroux.scrabble;
 
+import com.google.common.base.Suppliers;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.function.Supplier;
 
-final class DictionaryImpl implements Dictionary {
+final class Tries {
 
-    private final Set<String> words;
+    private static final Supplier<Trie> frenchTrieSupplier = Suppliers.memoize(() -> {
+        TrieImpl.Builder builder = TrieImpl.builder();
 
-    DictionaryImpl(InputStream is) throws IOException {
-        words = new HashSet<>();
-
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                words.add(line);
+        try (InputStream is = Tries.class.getResourceAsStream("/dic_fr.txt")) {
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
+                String word;
+                while ((word = br.readLine()) != null) {
+                    builder.addWord(word);
+                }
             }
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to construct Trie", e);
         }
-    }
 
-    @Override
-    public boolean isValid(String word) {
-        return words.contains(word);
+        return builder.build();
+    });
+
+    private Tries() {}
+
+    static Trie french() {
+        return frenchTrieSupplier.get();
     }
 }

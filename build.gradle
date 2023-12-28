@@ -48,6 +48,9 @@ subprojects {
 
     tasks.withType(JavaCompile) {
         options.compilerArgs += ['-Werror']
+
+        options.errorprone.disable 'PreferSafeLoggableExceptions'
+        options.errorprone.disable 'PreferSafeLoggingPreconditions'
     }
 
     tasks.check.dependsOn checkImplicitDependencies

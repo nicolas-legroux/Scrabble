@@ -18,19 +18,27 @@ package com.github.nlegroux.scrabble;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.io.IOException;
 import org.junit.jupiter.api.Test;
 
-class DictionaryImplTest {
+final class TrieTest {
 
     @Test
-    void french() throws IOException {
-        Dictionary dictionary = Dictionaries.french();
+    void french() {
+        Trie trie = Tries.french();
 
-        assertThat(dictionary.isValid("ABRACADABRA")).isTrue();
+        assertThat(trie.isPrefix("")).isTrue();
+        assertThat(trie.isWord("")).isFalse();
 
-        assertThat(dictionary.isValid("")).isFalse();
-        assertThat(dictionary.isValid("\n")).isFalse();
-        assertThat(dictionary.isValid("ABRACADABRAA")).isFalse();
+        assertThat(trie.isPrefix("\n")).isFalse();
+        assertThat(trie.isWord("\n")).isFalse();
+
+        assertThat(trie.isPrefix("ABRACADA")).isTrue();
+        assertThat(trie.isWord("ABRACADA")).isFalse();
+
+        assertThat(trie.isPrefix("ABRACADABRA")).isTrue();
+        assertThat(trie.isWord("ABRACADABRA")).isTrue();
+
+        assertThat(trie.isPrefix("ABRACADABRAA")).isFalse();
+        assertThat(trie.isWord("ABRACADABRAA")).isFalse();
     }
 }
