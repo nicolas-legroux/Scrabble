@@ -16,16 +16,9 @@
 
 package com.github.nlegroux.scrabble;
 
-import java.io.IOException;
-import java.io.InputStream;
+public interface Trie {
 
-final class Dictionaries {
+    boolean isPrefix(String prefix);
 
-    private Dictionaries() {}
-
-    static Dictionary french() throws IOException {
-        try (InputStream is = Dictionaries.class.getResourceAsStream("/dic_fr.txt")) {
-            return new DictionaryImpl(is);
-        }
-    }
+    boolean isWord(String word);
 }
