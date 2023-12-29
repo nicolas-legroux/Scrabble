@@ -16,9 +16,7 @@
 
 package com.github.nlegroux.scrabble;
 
-interface Trie {
+interface Grid {
 
-    boolean isPrefix(String prefix);
-
-    boolean isWord(String word);
+    GridElement get(int row, int column);
 }
