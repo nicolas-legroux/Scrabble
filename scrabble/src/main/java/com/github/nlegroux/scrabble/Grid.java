@@ -16,9 +16,16 @@
 
 package com.github.nlegroux.scrabble;
 
-interface Trie {
+import java.util.List;
 
-    boolean isPrefix(String prefix);
+interface Grid {
 
-    boolean isWord(String word);
+    List<GridElement> getRow(int row);
+
+    Grid playWord(String word, int row, int column, Direction direction, int... wildcardIndices);
+
+    enum Direction {
+        HORIZONTAL,
+        VERTICAL;
+    }
 }

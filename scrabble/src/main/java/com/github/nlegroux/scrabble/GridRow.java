@@ -16,9 +16,10 @@
 
 package com.github.nlegroux.scrabble;
 
-interface Trie {
+import java.util.List;
 
-    boolean isPrefix(String prefix);
+@FunctionalInterface
+interface GridRow {
 
-    boolean isWord(String word);
+    List<GridElement> get();
 }

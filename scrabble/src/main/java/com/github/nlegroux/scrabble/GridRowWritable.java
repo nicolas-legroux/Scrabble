@@ -16,9 +16,9 @@
 
 package com.github.nlegroux.scrabble;
 
-interface Trie {
+import java.util.List;
 
-    boolean isPrefix(String prefix);
+interface GridRowWritable extends GridRow {
 
-    boolean isWord(String word);
+    void put(List<GridElement> tiles, int columnOffset);
 }
