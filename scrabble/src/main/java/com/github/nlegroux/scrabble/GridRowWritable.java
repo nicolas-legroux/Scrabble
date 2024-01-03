@@ -18,14 +18,7 @@ package com.github.nlegroux.scrabble;
 
 import java.util.List;
 
-interface Grid {
+interface GridRowWritable extends GridRow {
 
-    List<GridElement> getRow(int row);
-
-    Grid playWord(String word, int row, int column, Direction direction, int... wildcardIndices);
-
-    enum Direction {
-        HORIZONTAL,
-        VERTICAL;
-    }
+    void put(List<GridElement> tiles, int columnOffset);
 }

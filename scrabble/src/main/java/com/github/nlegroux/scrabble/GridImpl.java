@@ -19,13 +19,15 @@ package com.github.nlegroux.scrabble;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.IntStream;
 
 final class GridImpl implements Grid {
 
     private static final int GRID_SIZE = 15;
 
-    private final List<GridRowImpl> rows;
+    private final List<GridRowWritable> rows;
 
     GridImpl() {
         rows = new ArrayList<>();
@@ -35,9 +37,43 @@ final class GridImpl implements Grid {
         }
     }
 
+    private GridImpl(GridImpl other) {
+        rows = new ArrayList<>();
+
+        for (GridRowWritable row : other.rows) {
+            rows.add(new GridRowImpl(row));
+        }
+    }
+
     @Override
-    public GridElement get(int row, int column) {
-        return rows.get(row).get(column);
+    public List<GridElement> getRow(int row) {
+        return rows.get(row).get();
+    }
+
+    @Override
+    public Grid playWord(String word, int row, int column, Direction direction, int... wildcardIndices) {
+        GridImpl updatedGrid = new GridImpl(this);
+
+        List<GridElement> tiles = IntStream.range(0, word.length())
+                .mapToObj(idx -> {
+                    if (Arrays.stream(wildcardIndices).anyMatch(i -> i == idx)) {
+                        return GridElement.wildcard(word.charAt(idx));
+                    } else {
+                        return GridElement.letter(word.charAt(idx));
+                    }
+                })
+                .toList();
+
+        switch (direction) {
+            case HORIZONTAL -> updatedGrid.rows.get(row).put(tiles, column);
+            case VERTICAL -> {
+                for (int i = 0; i < word.length(); i++) {
+                    updatedGrid.rows.get(row + i).put(List.of(tiles.get(i)), column);
+                }
+            }
+        }
+
+        return updatedGrid;
     }
 
     @Override
@@ -49,13 +85,13 @@ final class GridImpl implements Grid {
                 sb.append('\n');
             }
 
-            sb.append(rows.get(GRID_SIZE - (i + 1)));
+            sb.append(rows.get(i));
         }
 
         return sb.toString();
     }
 
-    private static final class GridRowImpl {
+    private static final class GridRowImpl implements GridRowWritable {
 
         private final List<GridElement> rowElements;
 
@@ -65,8 +101,20 @@ final class GridImpl implements Grid {
             this.rowElements = Arrays.asList(rowElements);
         }
 
-        GridElement get(int column) {
-            return rowElements.get(column);
+        private GridRowImpl(GridRowWritable other) {
+            rowElements = new ArrayList<>(other.get());
+        }
+
+        @Override
+        public List<GridElement> get() {
+            return Collections.unmodifiableList(rowElements);
+        }
+
+        @Override
+        public void put(List<GridElement> tiles, int columnOffset) {
+            for (int i = 0; i < tiles.size(); i++) {
+                rowElements.set(columnOffset + i, tiles.get(i));
+            }
         }
 
         @Override
@@ -96,7 +144,7 @@ final class GridImpl implements Grid {
             };
         }
 
-        static GridRowImpl generateEmptyRow(int idx) {
+        private static GridRowImpl generateEmptyRow(int idx) {
             return switch (idx) {
                 case 0, 14 -> new GridRowImpl(
                         GridElement.Empty.TRIPLE_WORD,

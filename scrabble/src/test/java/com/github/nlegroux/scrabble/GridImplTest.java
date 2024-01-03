@@ -18,6 +18,8 @@ package com.github.nlegroux.scrabble;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.github.nlegroux.scrabble.Grid.Direction;
+import com.github.nlegroux.scrabble.GridElement.Empty;
 import org.junit.jupiter.api.Test;
 
 final class GridImplTest {
@@ -42,5 +44,120 @@ final class GridImplTest {
                         + "  +   2 2   +  \n"
                         + " +   3   3   + \n"
                         + "*  2   *   2  *");
+    }
+
+    @Test
+    void playWord_horizontal() {
+        Grid grid = new GridImpl();
+        Grid updatedGrid = grid.playWord("ABCDEF", 1, 4, Direction.HORIZONTAL);
+
+        assertThat(updatedGrid.getRow(1))
+                .containsExactly(
+                        Empty.DEFAULT,
+                        Empty.DOUBLE_WORD,
+                        Empty.DEFAULT,
+                        Empty.DEFAULT,
+                        GridElement.letter('A'),
+                        GridElement.letter('B'),
+                        GridElement.letter('C'),
+                        GridElement.letter('D'),
+                        GridElement.letter('E'),
+                        GridElement.letter('F'),
+                        Empty.DEFAULT,
+                        Empty.DEFAULT,
+                        Empty.DEFAULT,
+                        Empty.DOUBLE_WORD,
+                        Empty.DEFAULT);
+        assertThat(grid.getRow(1))
+                .containsExactly(
+                        Empty.DEFAULT,
+                        Empty.DOUBLE_WORD,
+                        Empty.DEFAULT,
+                        Empty.DEFAULT,
+                        Empty.DEFAULT,
+                        Empty.TRIPLE_LETTER,
+                        Empty.DEFAULT,
+                        Empty.DEFAULT,
+                        Empty.DEFAULT,
+                        Empty.TRIPLE_LETTER,
+                        Empty.DEFAULT,
+                        Empty.DEFAULT,
+                        Empty.DEFAULT,
+                        Empty.DOUBLE_WORD,
+                        Empty.DEFAULT);
+    }
+
+    @Test
+    void playWord_vertical() {
+        Grid grid = new GridImpl();
+        Grid updatedGrid = grid.playWord("ABCDEF", 1, 4, Direction.VERTICAL);
+
+        assertThat(updatedGrid.getRow(1))
+                .containsExactly(
+                        Empty.DEFAULT,
+                        Empty.DOUBLE_WORD,
+                        Empty.DEFAULT,
+                        Empty.DEFAULT,
+                        GridElement.letter('A'),
+                        Empty.TRIPLE_LETTER,
+                        Empty.DEFAULT,
+                        Empty.DEFAULT,
+                        Empty.DEFAULT,
+                        Empty.TRIPLE_LETTER,
+                        Empty.DEFAULT,
+                        Empty.DEFAULT,
+                        Empty.DEFAULT,
+                        Empty.DOUBLE_WORD,
+                        Empty.DEFAULT);
+        assertThat(updatedGrid.getRow(2).get(4)).isEqualTo(GridElement.letter('B'));
+        assertThat(updatedGrid.getRow(3).get(4)).isEqualTo(GridElement.letter('C'));
+        assertThat(updatedGrid.getRow(4).get(4)).isEqualTo(GridElement.letter('D'));
+        assertThat(updatedGrid.getRow(5).get(4)).isEqualTo(GridElement.letter('E'));
+        assertThat(updatedGrid.getRow(6).get(4)).isEqualTo(GridElement.letter('F'));
+        assertThat(updatedGrid.getRow(7).get(4)).isEqualTo(Empty.DEFAULT);
+
+        assertThat(grid.getRow(1))
+                .containsExactly(
+                        Empty.DEFAULT,
+                        Empty.DOUBLE_WORD,
+                        Empty.DEFAULT,
+                        Empty.DEFAULT,
+                        Empty.DEFAULT,
+                        Empty.TRIPLE_LETTER,
+                        Empty.DEFAULT,
+                        Empty.DEFAULT,
+                        Empty.DEFAULT,
+                        Empty.TRIPLE_LETTER,
+                        Empty.DEFAULT,
+                        Empty.DEFAULT,
+                        Empty.DEFAULT,
+                        Empty.DOUBLE_WORD,
+                        Empty.DEFAULT);
+    }
+
+    @Test
+    void playWord_withWildcard() {
+        Grid grid = new GridImpl();
+
+        int[] wildcardIndices = new int[] {0, 2};
+        Grid updatedGrid = grid.playWord("ABC", 1, 4, Direction.HORIZONTAL, wildcardIndices);
+
+        assertThat(updatedGrid.getRow(1))
+                .containsExactly(
+                        Empty.DEFAULT,
+                        Empty.DOUBLE_WORD,
+                        Empty.DEFAULT,
+                        Empty.DEFAULT,
+                        GridElement.wildcard('A'),
+                        GridElement.letter('B'),
+                        GridElement.wildcard('C'),
+                        Empty.DEFAULT,
+                        Empty.DEFAULT,
+                        Empty.TRIPLE_LETTER,
+                        Empty.DEFAULT,
+                        Empty.DEFAULT,
+                        Empty.DEFAULT,
+                        Empty.DOUBLE_WORD,
+                        Empty.DEFAULT);
     }
 }
