@@ -1,0 +1,57 @@
+buildscript {
+    repositories {
+        mavenCentral() { metadataSources { mavenPom(); ignoreGradleMetadataRedirection() } }
+        gradlePluginPortal() { metadataSources { mavenPom(); ignoreGradleMetadataRedirection() } }
+    }
+
+    dependencies {
+        classpath 'com.palantir.gradle.jdks:gradle-jdks:0.34.0'
+        classpath 'com.palantir.gradle.jdkslatest:gradle-jdks-latest:0.12.0'
+        classpath 'com.palantir.javaformat:gradle-palantir-java-format:2.39.0'
+        classpath 'com.palantir.baseline:gradle-baseline-java:5.31.0'
+        classpath 'com.palantir.gradle.gitversion:gradle-git-version:3.0.0'
+        classpath 'gradle.plugin.org.inferred:gradle-processors:3.7.0'
+    }
+}
+
+plugins {
+    id 'com.palantir.consistent-versions' version '2.17.0'
+}
+
+apply plugin: 'com.palantir.baseline'
+apply plugin: 'com.palantir.git-version'
+apply plugin: 'com.palantir.baseline-java-versions'
+apply plugin: 'com.palantir.jdks.latest'
+
+javaVersions {
+    libraryTarget = 21
+    runtime = 21
+}
+
+allprojects {
+    apply plugin: 'com.palantir.java-format'
+
+    group 'com.github.nlegroux.scrabble'
+    version rootProject.version
+
+    repositories {
+        mavenCentral() { metadataSources { mavenPom(); ignoreGradleMetadataRedirection() } }
+    }
+    configurations.all {
+        resolutionStrategy.preferProjectModules()
+    }
+}
+
+subprojects {
+    apply plugin: 'java-library'
+    apply plugin: 'org.inferred.processors'
+
+    tasks.withType(JavaCompile) {
+        options.compilerArgs += ['-Werror']
+
+        options.errorprone.disable 'PreferSafeLoggableExceptions'
+        options.errorprone.disable 'PreferSafeLoggingPreconditions'
+    }
+
+    tasks.check.dependsOn checkImplicitDependencies
+}

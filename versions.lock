@@ -1,0 +1,20 @@
+# Run ./gradlew --write-locks to regenerate this file
+com.google.code.findbugs:jsr305:3.0.2 (1 constraints: 170aecb4)
+com.google.errorprone:error_prone_annotations:2.23.0 (1 constraints: 490a3cbf)
+com.google.guava:failureaccess:1.0.2 (1 constraints: 150ae2b4)
+com.google.guava:guava:33.0.0-jre (1 constraints: a6065d53)
+com.google.guava:listenablefuture:9999.0-empty-to-avoid-conflict-with-guava (1 constraints: bd17c918)
+com.google.j2objc:j2objc-annotations:2.8 (1 constraints: be09f5a0)
+org.checkerframework:checker-qual:3.41.0 (1 constraints: 4a0a44bf)
+
+[Test dependencies]
+net.bytebuddy:byte-buddy:1.12.21 (1 constraints: 7d0bbfea)
+org.apiguardian:apiguardian-api:1.1.2 (5 constraints: 105480ac)
+org.assertj:assertj-core:3.24.2 (1 constraints: 3d05473b)
+org.junit.jupiter:junit-jupiter:5.10.1 (1 constraints: 3905423b)
+org.junit.jupiter:junit-jupiter-api:5.10.1 (4 constraints: 2635e256)
+org.junit.jupiter:junit-jupiter-engine:5.10.1 (1 constraints: 340efe49)
+org.junit.jupiter:junit-jupiter-params:5.10.1 (2 constraints: 6c13475b)
+org.junit.platform:junit-platform-commons:1.10.1 (2 constraints: 2d214d83)
+org.junit.platform:junit-platform-engine:1.10.1 (1 constraints: d310e5c4)
+org.opentest4j:opentest4j:1.3.0 (2 constraints: cf209249)
